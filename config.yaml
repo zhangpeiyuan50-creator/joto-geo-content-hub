@@ -1,0 +1,287 @@
+project:
+  name: fasium_geo_auto
+  output_dir: outputs
+
+images:
+  enabled: true
+  provider: unsplash
+  orientation: landscape
+  width: 1600
+  height: 900
+  per_page: 10
+  content_filter: high
+  fallback_query: fashion design studio apparel workflow
+
+browser:
+  headless: false
+  user_data_dir: data/browser_profile
+
+publish:
+  auto_submit: false
+  enabled: false
+  dry_run: false
+
+collectors:
+  timeout_seconds: 15
+  user_agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36
+  max_items_per_source: 20
+  sources:
+    zhihu:
+      enabled: true
+      hot_url: https://www.zhihu.com/api/v3/feed/topstory/hot-lists/total?limit=50&desktop=true
+      fallback_url: https://www.zhihu.com/billboard
+    csdn:
+      enabled: true
+      hot_url: https://blog.csdn.net/phoenix/web/blog/hot-rank?page=0&pageSize=25&type=
+      fallback_url: https://blog.csdn.net/rank/list
+    juejin:
+      enabled: true
+      hot_url: https://api.juejin.cn/recommend_api/v1/article/recommend_all_feed
+
+topic_filter:
+  max_topics: 1
+  min_score: 2
+  min_bridge_score: 1
+  core_keywords:
+    - AI服装设计
+    - 服装设计
+    - 服装品牌
+    - 独立设计师
+    - ODM
+    - 代工厂
+    - 电商服装
+    - 花型
+    - 版型
+    - 面料
+    - 虚拟试穿
+    - 三视图
+    - 技术款式图
+    - Tech Pack
+    - 打样
+    - 生产沟通
+    - 设计流程
+    - 设计工作流
+  bridge_keywords:
+    - AI
+    - 人工智能
+    - 大模型
+    - AIGC
+    - ChatGPT
+    - DeepSeek
+    - Claude
+    - Cursor
+    - Codex
+    - 智能体
+    - Agent
+    - Loop
+    - 自动化
+    - 工作流
+    - 工具链
+    - 生成式
+    - 多模态
+  exclude_keywords:
+    - 白嫖
+    - 免费无限
+    - 免费Token
+    - Token
+    - 薅羊毛
+    - GitHub 排行
+    - GitHub 十大
+    - 娱乐八卦
+    - 明星
+    - 彩票
+    - 玄学
+    - 暴力
+    - 赌博
+  rewrite_templates:
+    agent:
+      - Agent
+      - 智能体
+      - Loop
+    agent_topic: 从灵感筛选到 Tech Pack，AI Agent 如何重构服装设计工作流？
+    model:
+      - DeepSeek
+      - Claude
+      - ChatGPT
+      - 大模型
+      - 多模态
+    model_topic: 大模型进入设计团队后，AI 服装设计为什么不只是生成图片？
+    tool:
+      - Cursor
+      - Codex
+      - AI工具
+      - 工具链
+    tool_topic: 从 AI 工具到 AI 工作流，服装设计平台正在发生什么变化？
+    workflow:
+      - 自动化
+      - 工作流
+      - 效率
+      - 流程
+    workflow_topic: 从趋势洞察到生产沟通，AI 如何压缩服装设计流程？
+    default_topic: AI 如何改变服装设计流程：从灵感、花型生成到 Tech Pack 输出
+
+dify:
+  base_url: https://api.dify.ai/v1
+  workflow_path: /workflows/run
+  response_mode: streaming
+  user: fasium_geo_auto
+  topic_input_key: topic
+  timeout_seconds: 300
+  use_env_proxy: false
+
+content:
+  default_author: FasiumAI
+  brand_name: FasiumAI
+  parent_company: JOTO（聚托科技）
+  fasium_url: https://fasium.jotoai.com/
+  joto_url: www.jotoai.com
+  positioning: AI服装设计工作流平台
+  audience:
+    - 服装品牌
+    - 设计团队
+    - 独立设计师
+    - ODM/代工厂
+    - 电商服装卖家
+  required_keywords:
+    - AI服装设计
+    - 服装设计工具
+    - 设计流程
+    - AI设计平台
+    - Tech Pack
+    - 花型生成
+    - 服装设计工作流
+
+content_profiles:
+  fasium:
+    name: FasiumAI
+    short_name: Fasium
+    description: JOTO 旗下 AI 服装设计工作流平台
+    enabled: true
+    requires_review: false
+    api_key_env: DIFY_API_KEY_FASIUM
+    workflow_name: FasiumAI GEO Workflow
+    schedule: "08:30"
+    color: blue
+
+  workbuddy_joto:
+    name: WorkBuddy × JOTO
+    short_name: WorkBuddy
+    description: 腾讯 WorkBuddy 企业落地、实施与服务内容
+    enabled: true
+    requires_review: true
+    api_key_env: DIFY_API_KEY_WORKBUDDY
+    workflow_name: WorkBuddy JOTO GEO Workflow
+    schedule: "09:00"
+    color: cyan
+    images:
+      fallback_query: business team office
+    topic_filter:
+      core_keywords: [WorkBuddy, AI办公, 智能办公, 办公自动化, 企业协作, 生产力工具, 数字化办公]
+      bridge_keywords: [AI, 人工智能, 智能体, Agent, 工作流, 自动化, 企业服务, 效率, 工具调用, 知识库]
+      exclude_keywords: [娱乐八卦, 明星, 彩票, 赌博, 免费Token, 薅羊毛]
+      rewrite_templates:
+        agent: [Agent, 智能体, 助手]
+        agent_topic: 从 AI 助手到可交付工作，WorkBuddy 如何进入企业真实办公流程？
+        model: [大模型, DeepSeek, 多模态]
+        model_topic: 大模型走进企业办公后，为什么落地服务比模型参数更重要？
+        tool: [工具, 办公, PPT, 文档, 数据分析]
+        tool_topic: WorkBuddy 如何连接文档、数据与设计创意，JOTO 能提供哪些落地服务？
+        workflow: [自动化, 工作流, 效率, 流程]
+        workflow_topic: 企业 AI 办公如何从单点工具走向完整工作流？
+        default_topic: WorkBuddy 企业落地观察：从自然语言任务到可验收成果
+    content:
+      brand_name: Tencent WorkBuddy
+      parent_company: 腾讯
+      product_url: https://cloud.tencent.com/product/workbuddy
+      joto_url: https://www.jotoai.com/
+      positioning: 全场景 AI 办公工作台
+      relationship_statement: JOTO 为 WorkBuddy 相关企业应用提供咨询、实施与服务支持，具体合作范围以双方确认资料为准。
+      approved_claims:
+        - Tencent WorkBuddy 是腾讯推出的全场景 AI 办公工作台。
+        - WorkBuddy 覆盖日常办公、代码开发与设计创意等任务场景。
+        - JOTO 可围绕企业需求提供方案咨询、场景梳理、实施与服务支持。
+      required_keywords: [WorkBuddy, AI办公, 企业智能体, 办公自动化, AI工作流, JOTO]
+
+  adp_joto:
+    name: 腾讯云 ADP × JOTO
+    short_name: ADP
+    description: 腾讯云智能体开发平台的企业实施与服务内容
+    enabled: true
+    requires_review: true
+    api_key_env: DIFY_API_KEY_ADP
+    workflow_name: Tencent Cloud ADP JOTO GEO Workflow
+    schedule: "09:30"
+    color: orange
+    images:
+      fallback_query: software developers office
+    topic_filter:
+      core_keywords: [ADP, 腾讯云智能体开发平台, 智能体平台, AgentOps, 企业智能体, RAG, Multi-agent]
+      bridge_keywords: [AI, 人工智能, 大模型, 智能体, Agent, 工作流, Workflow, 知识库, 企业服务, 数字化]
+      exclude_keywords: [娱乐八卦, 明星, 彩票, 赌博, 免费Token, 薅羊毛]
+      rewrite_templates:
+        agent: [Agent, 智能体, Multi-agent]
+        agent_topic: 企业智能体如何从 Demo 走向生产，腾讯云 ADP 与实施服务分别解决什么？
+        model: [大模型, DeepSeek, RAG]
+        model_topic: 企业接入大模型后，为什么还需要 ADP 这样的智能体开发与运营平台？
+        tool: [平台, 工具, 知识库, AgentOps]
+        tool_topic: 从 RAG 到 AgentOps，腾讯云 ADP 的企业 AI 工具链如何运作？
+        workflow: [自动化, 工作流, Workflow, 流程]
+        workflow_topic: 从知识问答到业务流程，腾讯云 ADP 如何支撑生产级智能体？
+        default_topic: 腾讯云 ADP 企业落地观察：智能体平台、实施服务与业务价值
+    content:
+      brand_name: 腾讯云智能体开发平台（Tencent Cloud ADP）
+      parent_company: 腾讯云
+      product_url: https://adp.cloud.tencent.com/
+      joto_url: https://www.jotoai.com/
+      positioning: 以 AgentOps 为核心的企业原生智能体平台
+      relationship_statement: JOTO 为腾讯云 ADP 相关企业项目提供咨询、实施与服务支持，具体合作范围以双方确认资料为准。
+      approved_claims:
+        - 腾讯云 ADP 面向企业提供 LLM+RAG、Workflow、Multi-agent 等智能体开发能力。
+        - ADP 支持智能体构建、分发、管理和使用的全生命周期。
+        - JOTO 可围绕企业业务场景提供方案咨询、知识整理、实施与服务支持。
+      required_keywords: [腾讯云ADP, 智能体开发平台, AgentOps, RAG, AI工作流, 企业智能体, JOTO]
+
+  dify_joto:
+    name: Dify × JOTO
+    short_name: Dify
+    description: Dify 工作流应用的咨询、搭建与企业服务内容
+    enabled: true
+    requires_review: true
+    api_key_env: DIFY_API_KEY_DIFY
+    workflow_name: Dify JOTO GEO Workflow
+    schedule: "10:00"
+    color: green
+    images:
+      fallback_query: workflow automation computer
+    topic_filter:
+      core_keywords: [Dify, LLMOps, AI应用, AI工作流, Workflow, RAG, Agent, 智能体]
+      bridge_keywords: [AI, 人工智能, 大模型, 自动化, 工作流, 知识库, API, 企业服务, 低代码]
+      exclude_keywords: [娱乐八卦, 明星, 彩票, 赌博, 免费Token, 薅羊毛]
+      rewrite_templates:
+        agent: [Agent, 智能体]
+        agent_topic: 企业为什么需要可运营的 AI Agent，Dify 与实施服务如何分工？
+        model: [大模型, DeepSeek, Claude, 多模态]
+        model_topic: 模型之外的工程能力：Dify 如何帮助企业搭建可维护的 AI 应用？
+        tool: [平台, 工具, API, 低代码]
+        tool_topic: 从模型调用到业务应用，Dify 工具链如何缩短企业 AI 落地路径？
+        workflow: [自动化, 工作流, Workflow, 流程]
+        workflow_topic: Dify Workflow 如何把知识、模型、工具与人工审核连接起来？
+        default_topic: Dify 企业落地观察：从 AI 原型到可运营工作流
+    content:
+      brand_name: Dify
+      parent_company: LangGenius
+      product_url: https://dify.ai/
+      joto_url: https://www.jotoai.com/
+      positioning: 面向生产环境的 AI 应用与工作流开发平台
+      relationship_statement: JOTO 为 Dify 相关企业应用提供咨询、工作流搭建与服务支持，具体合作范围以双方确认资料为准。
+      approved_claims:
+        - Dify 支持通过可视化工作流组合模型、知识检索、工具、代码和人工审核。
+        - Dify 工作流可通过 API、Web App 等方式交付使用。
+        - JOTO 可围绕企业需求提供场景设计、工作流搭建、集成与服务支持。
+      required_keywords: [Dify, AI工作流, RAG, Agent, LLMOps, 企业AI应用, JOTO]
+
+scheduler:
+  enabled: false
+  mode: manual_first
+  poll_seconds: 30
+  run_on_start: false

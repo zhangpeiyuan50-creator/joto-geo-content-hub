@@ -1,0 +1,311 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>JOTO GEO Content Hub</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f4f6f8;
+      --surface: #ffffff;
+      --surface-2: #f8f9fb;
+      --ink: #111318;
+      --muted: #697180;
+      --line: #dde1e7;
+      --black: #111214;
+      --blue: #2764d8;
+      --blue-soft: #eaf2ff;
+      --cyan-soft: #e7f7f7;
+      --orange-soft: #fff0e3;
+      --green-soft: #e7f6ed;
+      --green: #16834f;
+      --red: #cf3b32;
+      --red-soft: #fff0ee;
+      --shadow: 0 12px 30px rgba(19, 27, 38, .06);
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body { margin: 0; background: var(--bg); color: var(--ink); font-family: "Segoe UI", "Microsoft YaHei", Arial, sans-serif; letter-spacing: 0; }
+    button, input, select { font: inherit; }
+    button { cursor: pointer; }
+    h1, h2, h3, h4, p { margin: 0; }
+    .app { min-height: 100vh; display: grid; grid-template-columns: 240px minmax(0, 1fr); }
+    .sidebar { position: sticky; top: 0; height: 100vh; padding: 28px 20px; background: #fff; border-right: 1px solid var(--line); display: flex; flex-direction: column; }
+    .brand { display: flex; align-items: center; gap: 12px; padding: 0 8px 28px; }
+    .brand-mark { width: 40px; height: 40px; display: grid; place-items: center; background: var(--black); color: #fff; font: 600 19px Georgia, serif; border-radius: 8px; }
+    .brand strong { display: block; font: 600 22px Georgia, "Microsoft YaHei", serif; }
+    .brand small { display: block; margin-top: 3px; color: var(--muted); font-size: 11px; }
+    .nav-label { padding: 0 10px; margin: 12px 0 8px; color: #9299a5; font-size: 10px; font-weight: 700; text-transform: uppercase; }
+    .nav { display: grid; gap: 5px; }
+    .nav button, .nav a { width: 100%; min-height: 42px; padding: 0 11px; border: 0; border-radius: 7px; background: transparent; color: #4c5360; text-decoration: none; display: flex; align-items: center; gap: 10px; text-align: left; }
+    .nav button:hover, .nav a:hover, .nav button.active { color: var(--ink); background: #f0f2f4; }
+    .nav-dot { width: 8px; height: 8px; border: 2px solid currentColor; border-radius: 50%; flex: 0 0 auto; }
+    .sidebar-foot { margin-top: auto; padding: 16px 10px 0; border-top: 1px solid var(--line); color: var(--muted); font-size: 11px; line-height: 1.65; }
+    .workspace { min-width: 0; }
+    .topbar { position: sticky; top: 0; z-index: 20; min-height: 82px; padding: 16px 32px; display: flex; align-items: center; justify-content: space-between; gap: 24px; background: rgba(255,255,255,.94); border-bottom: 1px solid var(--line); backdrop-filter: blur(14px); }
+    .topbar h1 { font-size: 21px; }
+    .topbar p { margin-top: 5px; color: var(--muted); font-size: 12px; }
+    .top-actions { display: flex; align-items: center; gap: 12px; }
+    .live { display: inline-flex; align-items: center; gap: 7px; color: var(--green); font-size: 12px; font-weight: 700; }
+    .live::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+    .icon-button { width: 38px; height: 38px; border: 1px solid var(--line); border-radius: 7px; background: #fff; color: var(--ink); font-size: 18px; }
+    .icon-button:hover { background: #f1f3f5; }
+    main { max-width: 1580px; margin: 0 auto; padding: 28px 32px 56px; display: grid; gap: 28px; }
+    .hero { display: grid; grid-template-columns: minmax(0, 1.7fr) minmax(310px, .7fr); gap: 16px; }
+    .hero-copy { min-height: 260px; padding: 30px; background: var(--blue-soft); border: 1px solid #d3e2f8; border-radius: 8px; display: flex; flex-direction: column; justify-content: space-between; }
+    .eyebrow { color: var(--muted); font-size: 11px; font-weight: 750; text-transform: uppercase; }
+    .hero-copy h2 { max-width: 820px; margin-top: 13px; font: 500 38px/1.2 Georgia, "Microsoft YaHei", serif; }
+    .hero-copy p { max-width: 760px; margin-top: 14px; color: #535b68; font-size: 14px; line-height: 1.75; }
+    .hero-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 24px; }
+    .button { min-height: 42px; padding: 0 16px; border: 1px solid var(--black); border-radius: 7px; background: var(--black); color: #fff; font-weight: 700; font-size: 13px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; text-decoration: none; }
+    .button:hover { transform: translateY(-1px); }
+    .button.light { background: #fff; color: var(--ink); border-color: #cbd0d7; }
+    .button.approve { background: var(--green); border-color: var(--green); }
+    .button:disabled { opacity: .48; cursor: not-allowed; transform: none; }
+    .system-panel { padding: 24px; background: var(--black); color: #fff; border-radius: 8px; display: flex; flex-direction: column; justify-content: space-between; gap: 22px; }
+    .system-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 14px; }
+    .system-head h2 { margin-top: 8px; font: 500 27px Georgia, serif; }
+    .system-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .system-item { padding-top: 10px; border-top: 1px solid #383b42; min-width: 0; }
+    .system-item span { display: block; color: #aeb4be; font-size: 10px; margin-bottom: 5px; }
+    .system-item strong { display: block; font-size: 12px; overflow-wrap: anywhere; }
+    .status { min-height: 27px; padding: 0 9px; border-radius: 999px; display: inline-flex; align-items: center; gap: 6px; font-size: 10px; font-weight: 750; white-space: nowrap; }
+    .status::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+    .status.running { color: #2666d8; background: #e8f1ff; }
+    .status.success, .status.approved, .status.not_required, .status.ready { color: #167548; background: #e6f5ec; }
+    .status.failed, .status.stopped { color: #c8322a; background: #fff0ee; }
+    .status.pending { color: #a45a13; background: #fff1df; }
+    .system-panel .status.running { color: #79f0a8; background: rgba(42,189,100,.13); }
+    .modules-section { display: grid; gap: 14px; }
+    .section-head { display: flex; align-items: end; justify-content: space-between; gap: 20px; }
+    .section-head h2 { font: 500 27px Georgia, "Microsoft YaHei", serif; }
+    .section-head p { margin-top: 5px; color: var(--muted); font-size: 12px; }
+    .module-grid { display: grid; grid-template-columns: repeat(4, minmax(180px, 1fr)); gap: 12px; }
+    .module-card { min-height: 174px; padding: 18px; border: 1px solid var(--line); border-radius: 8px; background: #fff; box-shadow: var(--shadow); text-align: left; transition: transform .16s ease, border-color .16s ease; }
+    .module-card:hover { transform: translateY(-2px); border-color: #bfc6d0; }
+    .module-card.active { border-color: var(--ink); box-shadow: 0 0 0 1px var(--ink); }
+    .module-card.blue { background: var(--blue-soft); }
+    .module-card.cyan { background: var(--cyan-soft); }
+    .module-card.orange { background: var(--orange-soft); }
+    .module-card.green { background: var(--green-soft); }
+    .module-top { display: flex; justify-content: space-between; gap: 12px; }
+    .module-symbol { width: 32px; height: 32px; border: 1px solid rgba(17,19,24,.14); border-radius: 7px; background: rgba(255,255,255,.75); display: grid; place-items: center; font-weight: 800; }
+    .module-card h3 { margin-top: 18px; font-size: 16px; }
+    .module-card p { margin-top: 7px; min-height: 38px; color: #5b6370; font-size: 11px; line-height: 1.55; }
+    .module-stats { display: flex; gap: 14px; margin-top: 12px; color: var(--muted); font-size: 10px; }
+    .kpis { display: grid; grid-template-columns: repeat(6, minmax(120px, 1fr)); gap: 12px; }
+    .metric { min-height: 122px; padding: 18px; background: #fff; border: 1px solid var(--line); border-radius: 8px; box-shadow: var(--shadow); }
+    .metric:hover { transform: translateY(-2px); }
+    .metric span { color: var(--muted); font-size: 11px; }
+    .metric strong { display: block; margin-top: 18px; font: 500 29px Georgia, serif; }
+    .metric small { display: block; margin-top: 6px; color: var(--muted); font-size: 10px; }
+    .operations { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(320px, .5fr); gap: 16px; align-items: start; }
+    .panel { background: #fff; border: 1px solid var(--line); border-radius: 8px; box-shadow: var(--shadow); overflow: hidden; }
+    .panel-head { min-height: 66px; padding: 15px 18px; display: flex; align-items: center; justify-content: space-between; gap: 12px; border-bottom: 1px solid var(--line); }
+    .panel-head h3 { font-size: 15px; }
+    .panel-head p { margin-top: 4px; color: var(--muted); font-size: 10px; }
+    .jobs { padding: 0 18px; }
+    .job-row { width: 100%; padding: 15px 0; border: 0; border-bottom: 1px solid var(--line); background: transparent; display: grid; grid-template-columns: minmax(0, 1fr) 90px 100px; gap: 14px; align-items: center; text-align: left; }
+    .job-row:last-child { border-bottom: 0; }
+    .job-row:hover .job-title { color: var(--blue); }
+    .job-row.selected { background: #f7f9fc; box-shadow: 18px 0 #f7f9fc, -18px 0 #f7f9fc; }
+    .job-title { font-weight: 700; line-height: 1.45; overflow-wrap: anywhere; }
+    .job-sub { margin-top: 6px; display: flex; gap: 10px; flex-wrap: wrap; color: var(--muted); font-size: 10px; }
+    .job-stat span { display: block; color: var(--muted); font-size: 9px; }
+    .job-stat strong { font-size: 12px; }
+    .side-stack { display: grid; gap: 16px; }
+    .asset-grid { display: grid; grid-template-columns: 1fr 1fr; }
+    .asset-item { padding: 16px; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+    .asset-item:nth-child(2n) { border-right: 0; }
+    .asset-item:nth-last-child(-n+2) { border-bottom: 0; }
+    .asset-item span { color: var(--muted); font-size: 10px; }
+    .asset-item strong { display: block; margin-top: 7px; font: 500 24px Georgia, serif; }
+    .logs { min-height: 220px; max-height: 330px; margin: 0; padding: 16px; overflow: auto; white-space: pre-wrap; background: #15171b; color: #dbe1e9; font: 10px/1.65 Consolas, monospace; }
+    .publish-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+    .publish-item { min-height: 190px; padding: 18px; border: 1px solid var(--line); border-radius: 8px; display: flex; flex-direction: column; }
+    .publish-item.blue { background: var(--blue-soft); }
+    .publish-item.orange { background: var(--orange-soft); }
+    .publish-item.green { background: var(--green-soft); }
+    .publish-title { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+    .publish-title h3 { font-size: 16px; }
+    .publish-item p { margin: 18px 0; color: #555d69; font-size: 11px; line-height: 1.6; }
+    .publish-item .button { width: 100%; margin-top: auto; background: #fff; color: var(--ink); border-color: rgba(17,19,24,.2); }
+    .publish-message { margin-top: 8px; min-height: 16px; color: var(--muted); font-size: 10px; }
+    .outputs { display: grid; gap: 14px; }
+    .content-package { background: #fff; border: 1px solid var(--line); border-radius: 8px; box-shadow: var(--shadow); overflow: hidden; }
+    .package-head { padding: 17px 20px; display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; border-bottom: 1px solid var(--line); }
+    .package-head h3 { font-size: 15px; line-height: 1.5; }
+    .package-head p { margin-top: 5px; color: var(--muted); font-size: 10px; }
+    .package-statuses { display: flex; gap: 7px; flex-wrap: wrap; justify-content: flex-end; }
+    .package-body { display: grid; grid-template-columns: minmax(280px, .72fr) minmax(0, 1.28fr); }
+    .cover-module { padding: 18px; border-right: 1px solid var(--line); }
+    .cover-preview { display: block; overflow: hidden; background: #edf0f2; border-radius: 7px; }
+    .cover-preview img { display: block; width: 100%; aspect-ratio: 16 / 9; object-fit: cover; }
+    .empty-cover { aspect-ratio: 16/9; display: grid; place-items: center; color: var(--muted); border: 1px dashed #c4cad2; border-radius: 7px; }
+    .module-label { display: flex; justify-content: space-between; gap: 10px; margin-bottom: 10px; font-size: 11px; font-weight: 750; }
+    .module-actions { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 11px; }
+    .tiny-link { min-height: 31px; padding: 0 9px; border: 1px solid var(--line); border-radius: 7px; background: #fff; color: var(--ink); text-decoration: none; display: inline-flex; align-items: center; font-size: 10px; }
+    .tiny-link:hover { border-color: var(--ink); }
+    .article-modules { display: grid; grid-template-columns: repeat(3, 1fr); align-content: start; }
+    .article-module { min-height: 130px; padding: 18px; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+    .article-module:nth-child(3) { border-right: 0; }
+    .article-module.wide { grid-column: span 3; min-height: 90px; border-right: 0; }
+    .article-module h4 { font-size: 13px; }
+    .article-module p { margin-top: 7px; color: var(--muted); font-size: 10px; line-height: 1.5; }
+    .empty { padding: 28px; color: var(--muted); text-align: center; font-size: 12px; }
+    .muted { color: var(--muted); font-size: 11px; }
+    @media (max-width: 1240px) { .app { grid-template-columns: 1fr; } .sidebar { display: none; } .module-grid { grid-template-columns: repeat(2, 1fr); } .kpis { grid-template-columns: repeat(3, 1fr); } }
+    @media (max-width: 860px) { .topbar { padding: 14px 16px; } .topbar p, #refresh-time { display: none; } main { padding: 18px 14px 40px; } .hero, .operations { grid-template-columns: 1fr; } .hero-copy h2 { font-size: 30px; } .publish-grid { grid-template-columns: 1fr; } .package-body { grid-template-columns: 1fr; } .cover-module { border-right: 0; border-bottom: 1px solid var(--line); } }
+    @media (max-width: 580px) { .module-grid, .kpis { grid-template-columns: 1fr; } .article-modules { grid-template-columns: 1fr; } .article-module, .article-module:nth-child(3) { border-right: 0; } .article-module.wide { grid-column: span 1; } .job-row { grid-template-columns: 1fr auto; } .job-stat { display: none; } }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand"><div class="brand-mark">J</div><div><strong>JOTO</strong><small>GEO Content Hub</small></div></div>
+      <div class="nav-label">Workspace</div>
+      <nav class="nav">
+        <button id="nav-all" class="active" onclick="selectModule('all')"><span class="nav-dot"></span>全站总览</button>
+        <div id="module-nav"></div>
+        <a href="#publish"><span class="nav-dot"></span>平台发布</a>
+        <a href="#jobs"><span class="nav-dot"></span>任务中心</a>
+        <a href="#content"><span class="nav-dot"></span>内容资产</a>
+      </nav>
+      <div class="sidebar-foot">热点采集 → 独立 Dify Workflow → Unsplash 配图 → 人工审核 → 三平台发布辅助</div>
+    </aside>
+    <div class="workspace">
+      <header class="topbar">
+        <div><h1>JOTO 多内容 GEO 工作台</h1><p>Content Operations · 四个内容模块统一生产、审核与分发</p></div>
+        <div class="top-actions"><span class="live">系统在线</span><span id="refresh-time" class="muted">正在同步</span><button class="icon-button" onclick="loadDashboard()" title="刷新数据">↻</button></div>
+      </header>
+      <main>
+        <section class="hero">
+          <div class="hero-copy">
+            <div><span class="eyebrow">JOTO GEO CONTENT OPERATIONS</span><h2 id="hero-title">一个工作台，管理四条 GEO 内容生产线</h2><p id="hero-copy">保留 FasiumAI 内容能力，并统一管理 WorkBuddy、腾讯云 ADP 与 Dify 的合作服务内容。</p></div>
+            <div class="hero-actions"><button id="run-button" class="button" onclick="startRun()">▶ 生成当前模块内容</button><a class="button light" href="#jobs">查看任务</a><a class="button light" href="#publish">前往发布</a></div>
+          </div>
+          <div class="system-panel">
+            <div class="system-head"><div><span class="eyebrow">SYSTEM LAYER</span><h2>Scheduler</h2></div><span id="scheduler-status" class="status stopped">读取中</span></div>
+            <div id="scheduler-grid" class="system-grid"></div>
+          </div>
+        </section>
+
+        <section class="modules-section">
+          <div class="section-head"><div><h2>内容矩阵</h2><p>选择模块后，任务、内容、审核和发布都会自动切换到对应生产线。</p></div><span class="eyebrow">4 CONTENT PROFILES</span></div>
+          <div id="module-cards" class="module-grid"></div>
+        </section>
+
+        <section id="kpis" class="kpis"></section>
+
+        <section id="jobs" class="operations">
+          <div class="panel"><div class="panel-head"><div><h3>最近任务</h3><p>选择一个已生成 Job，用于审核、预览和发布</p></div><span id="selected-job-label" class="eyebrow">尚未选择</span></div><div id="jobs-list" class="jobs"></div></div>
+          <div class="side-stack">
+            <div class="panel"><div class="panel-head"><div><h3>资源概览</h3><p>当前筛选范围</p></div></div><div id="assets" class="asset-grid"></div></div>
+            <div class="panel"><div class="panel-head"><div><h3>本次运行日志</h3><p>Generation Logs</p></div></div><pre id="logs" class="logs">正在读取...</pre></div>
+          </div>
+        </section>
+
+        <section id="publish" class="modules-section">
+          <div class="section-head"><div><h2>平台发布中心</h2><p id="publish-note">先选择模块和 Job。合作内容通过人工审核后才可启动发布辅助。</p></div><span class="eyebrow">HUMAN IN THE LOOP</span></div>
+          <div id="publish-platforms" class="publish-grid"></div>
+        </section>
+
+        <section id="content" class="modules-section">
+          <div class="section-head"><div><h2>内容资产库</h2><p>文章、封面、署名、Prompt 与 metadata 按 Content Package 统一展示。</p></div></div>
+          <div id="outputs" class="outputs"></div>
+        </section>
+      </main>
+    </div>
+  </div>
+  <script>
+    let currentModule = new URLSearchParams(location.search).get("module") || "all";
+    let selectedJob = "";
+    let dashboardData = null;
+    const escapeHtml = value => String(value ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+    const statusText = value => ({idle:"待命",running:"进行中",success:"成功",generated:"已生成",failed:"失败",stopped:"已停止",pending:"待审核",approved:"已审核",not_required:"无需审核",ready:"待确认",manual:"手动模式"}[value] || value || "未知");
+    const statusClass = value => ["success","generated","approved","not_required","ready"].includes(value) ? "success" : value === "pending" ? "pending" : value === "failed" || value === "stopped" ? "failed" : "running";
+    const metric = (label, value, note) => `<article class="metric"><span>${label}</span><strong>${value}</strong><small>${note || ""}</small></article>`;
+    const systemItem = (label, value) => `<div class="system-item"><span>${label}</span><strong>${escapeHtml(value || "-")}</strong></div>`;
+    const assetItem = (label, value) => `<div class="asset-item"><span>${label}</span><strong>${value || 0}</strong></div>`;
+    const action = (asset, label) => asset?.exists ? `<a class="tiny-link" href="${asset.view_url}" target="_blank">${label}</a>` : `<span class="tiny-link muted">暂无${label}</span>`;
+    const download = (asset, label) => asset?.exists ? `<a class="tiny-link" href="${asset.download_url}">${label}</a>` : "";
+
+    async function loadDashboard() {
+      const response = await fetch(`/api/dashboard?module=${encodeURIComponent(currentModule)}`, {cache:"no-store"});
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || `HTTP ${response.status}`);
+      dashboardData = data;
+      if (selectedJob && !data.job_layer.some(job => job.job_id === selectedJob)) selectedJob = "";
+      if (!selectedJob) selectedJob = data.job_layer.find(job => job.status === "success")?.job_id || "";
+      render(data);
+    }
+
+    function render(data) {
+      document.getElementById("refresh-time").textContent = `更新于 ${data.generated_at.slice(11,19)}`;
+      renderModuleNav(data.modules); renderModuleCards(data.modules); renderHero(data.modules);
+      renderScheduler(data.system_layer.scheduler); renderKpis(data.kpis); renderJobs(data.job_layer);
+      renderAssets(data.asset_layer); renderPublish(data.publish_layer); renderOutputs(data.content_layer);
+      document.getElementById("logs").textContent = data.run_state.logs || data.system_layer.logs.system || "暂无日志";
+      document.getElementById("run-button").disabled = currentModule === "all" || Boolean(data.run_state.running);
+    }
+
+    function renderModuleNav(modules) {
+      document.getElementById("nav-all").classList.toggle("active", currentModule === "all");
+      document.getElementById("module-nav").innerHTML = modules.map(item => `<button class="${currentModule === item.id ? "active" : ""}" onclick="selectModule('${item.id}')"><span class="nav-dot"></span>${escapeHtml(item.short_name)}</button>`).join("");
+    }
+
+    function renderModuleCards(modules) {
+      const symbols = {fasium:"F",workbuddy_joto:"W",adp_joto:"A",dify_joto:"D"};
+      document.getElementById("module-cards").innerHTML = modules.map(item => `<button class="module-card ${item.color} ${currentModule === item.id ? "active" : ""}" onclick="selectModule('${item.id}')"><div class="module-top"><span class="module-symbol">${symbols[item.id] || "J"}</span><span class="status ${item.pending_review ? "pending" : "success"}">${item.pending_review ? `${item.pending_review} 待审核` : "就绪"}</span></div><h3>${escapeHtml(item.name)}</h3><p>${escapeHtml(item.description)}</p><div class="module-stats"><span>今日 ${item.today_jobs}</span><span>成功 ${item.success}</span><span>${item.schedule}</span></div></button>`).join("");
+    }
+
+    function renderHero(modules) {
+      const module = modules.find(item => item.id === currentModule);
+      document.getElementById("hero-title").textContent = module ? `${module.name} 内容生产线` : "一个工作台，管理四条 GEO 内容生产线";
+      document.getElementById("hero-copy").textContent = module ? module.description + "。热点、Dify 内容、Unsplash 配图和三平台发布在同一条任务链中管理。" : "保留 FasiumAI 内容能力，并统一管理 WorkBuddy、腾讯云 ADP 与 Dify 的合作服务内容。";
+    }
+
+    function renderScheduler(s) {
+      const pill = document.getElementById("scheduler-status");
+      pill.className = `status ${statusClass(s.status)}`; pill.textContent = statusText(s.status);
+      const next = currentModule !== "all" ? (s.next_runs?.[currentModule] || s.next_run) : s.next_run;
+      document.getElementById("scheduler-grid").innerHTML = [systemItem("运行模式", statusText(s.mode)), systemItem("下次运行", next), systemItem("最近模块", s.last_module), systemItem("心跳 / PID", `${s.heartbeat} / ${s.pid}`)].join("");
+    }
+
+    function renderKpis(k) {
+      document.getElementById("kpis").innerHTML = [metric("今日 Job", k.today_jobs, `${k.running} 个执行中`),metric("内容成功率", `${k.success_rate}%`, `${k.success} 成功 · ${k.failed} 失败`),metric("平均耗时", k.avg_duration_label, "Dify workflow"),metric("封面成功率", `${k.image_success_rate}%`, "Unsplash assets"),metric("Dify 成功率", `${k.dify_success_rate}%`, "Workflow API"),metric("待审核", k.pending_review, "合作声明确认")].join("");
+    }
+
+    function renderJobs(jobs) {
+      const root = document.getElementById("jobs-list");
+      if (!jobs.length) { root.innerHTML = `<div class="empty">当前模块暂无任务</div>`; document.getElementById("selected-job-label").textContent = "尚未选择"; return; }
+      root.innerHTML = jobs.map(job => `<button class="job-row ${selectedJob === job.job_id ? "selected" : ""}" onclick="selectJob('${job.job_id}')"><div><div class="job-title">${escapeHtml(job.topic?.title || job.job_id)}</div><div class="job-sub"><span>${escapeHtml(job.module_name)}</span><span>${escapeHtml(job.job_id)}</span><span>${escapeHtml(job.created_time)}</span><span class="status ${statusClass(job.review_status)}">${statusText(job.review_status)}</span></div></div><div class="job-stat"><span>耗时 / 输出</span><strong>${escapeHtml(job.duration_label)} · ${job.output_count}</strong></div><span class="status ${statusClass(job.status)}">${statusText(job.status)}</span></button>`).join("");
+      const job = jobs.find(item => item.job_id === selectedJob); document.getElementById("selected-job-label").textContent = job ? `已选 ${job.job_id}` : "尚未选择";
+    }
+
+    function renderAssets(a) { document.getElementById("assets").innerHTML = [assetItem("图片",a.images),assetItem("文章",a.html_md_outputs),assetItem("元数据",a.json_metadata),assetItem("提示词",a.text_prompts)].join(""); }
+
+    function renderPublish(layer) {
+      const job = dashboardData?.job_layer.find(item => item.job_id === selectedJob);
+      const descriptions = {zhihu:"行业观察和专业观点，填入知乎富文本编辑器。",csdn:"技术流程和工具链分析，填入 Markdown 编辑器。",sohu:"大众化行业解读，填入搜狐号富文本编辑器。"};
+      document.getElementById("publish-platforms").innerHTML = ["zhihu","csdn","sohu"].map(platform => { const p = layer[platform]; const blocked = !job || job.status !== "success" || job.review_status === "pending" || p.running; return `<article class="publish-item ${p.accent}"><div class="publish-title"><h3>${escapeHtml(p.name)}</h3><span class="status ${statusClass(p.status)}">${statusText(p.status)}</span></div><p>${descriptions[platform]}</p><button class="button" data-platform="${platform}" onclick="startPublish('${platform}')" ${blocked ? "disabled" : ""}>${p.running ? "正在启动编辑器..." : `发布所选 Job 到${escapeHtml(p.name)}`}</button><div class="publish-message">${job?.review_status === "pending" ? "请先审核合作声明" : escapeHtml(p.message)}</div></article>`; }).join("");
+    }
+
+    function renderOutputs(outputs) {
+      const root = document.getElementById("outputs"); if (!outputs.length) { root.innerHTML = `<div class="empty">当前模块暂无内容资产</div>`; return; }
+      root.innerHTML = outputs.map(output => { const content=output.content_layer, cover=content.cover_image, image=cover.image, articles=content.article; const pending=output.review_status === "pending"; return `<article class="content-package"><header class="package-head"><div><h3>${escapeHtml(output.title)}</h3><p>${escapeHtml(output.module_name)} · ${escapeHtml(output.created_at)} · Job ${escapeHtml(output.job_id)}</p></div><div class="package-statuses"><span class="status ${statusClass(output.review_status)}">${statusText(output.review_status)}</span>${pending ? `<button class="button approve" onclick="approveJob('${output.job_id}')">确认合作表述</button>` : ""}</div></header><div class="package-body"><section class="cover-module"><div class="module-label"><span>封面图 Cover</span><span>${escapeHtml(cover.source || "Unsplash")}</span></div>${image.exists ? `<a class="cover-preview" href="${image.view_url}" target="_blank"><img src="${image.asset_url}" alt="文章封面"></a>` : `<div class="empty-cover">暂无封面图</div>`}<div class="module-actions">${action(cover.metadata,"图片信息")}${action(cover.attribution,"摄影署名")}${download(image,"下载封面")}</div></section><section class="article-modules"><div class="article-module"><h4>知乎文章</h4><p>富文本 · 行业观察</p><div class="module-actions">${action(articles.zhihu,"查看文章")}</div></div><div class="article-module"><h4>CSDN 文章</h4><p>Markdown · 技术拆解</p><div class="module-actions">${action(articles.csdn,"查看文章")}</div></div><div class="article-module"><h4>搜狐号文章</h4><p>富文本 · 行业解读</p><div class="module-actions">${action(articles.sohu,"查看文章")}</div></div><div class="article-module wide"><h4>Metadata & Prompt</h4><p>主题来源、工作流、审核状态、生成记录与封面提示词。</p><div class="module-actions">${action(content.metadata,"查看元数据")}${action(content.prompt,"查看 Prompt")}${download(content.metadata,"下载 JSON")}</div></div></section></div></article>`; }).join("");
+    }
+
+    function selectModule(moduleId) { currentModule = moduleId; selectedJob = ""; const url = new URL(location.href); moduleId === "all" ? url.searchParams.delete("module") : url.searchParams.set("module", moduleId); history.replaceState({}, "", url); loadDashboard(); }
+    function selectJob(jobId) { selectedJob = jobId; renderJobs(dashboardData.job_layer); renderPublish(dashboardData.publish_layer); document.getElementById("publish").scrollIntoView({block:"start"}); }
+
+    async function startRun() { if (currentModule === "all") return alert("请先选择一个内容模块"); const response = await fetch(`/api/run/${currentModule}`, {method:"POST"}); const result = await response.json(); if (!response.ok) return alert(result.error || "启动失败"); await loadDashboard(); }
+    async function approveJob(jobId) { if (!confirm("确认文章中的合作身份、服务范围和事实表述符合公司资料吗？")) return; const response = await fetch(`/api/jobs/${jobId}/review`, {method:"POST"}); const result = await response.json(); if (!response.ok) return alert(result.error || "审核失败"); await loadDashboard(); }
+    async function startPublish(platform) { const job = dashboardData?.job_layer.find(item => item.job_id === selectedJob); if (!job) return alert("请先选择一个已生成 Job"); const response = await fetch(`/api/publish/${job.module_id}/${platform}`, {method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({job_id:job.job_id})}); const result = await response.json(); if (!response.ok) return alert(result.error || "启动失败"); await loadDashboard(); }
+
+    loadDashboard().catch(error => { document.getElementById("logs").textContent = `Dashboard 加载失败：${error.message}`; });
+    setInterval(() => loadDashboard().catch(() => {}), 5000);
+  </script>
+</body>
+</html>

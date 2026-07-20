@@ -1,0 +1,27 @@
+# Local secrets
+.env
+.env.*.local
+
+# Python environments and caches
+.venv/
+venv/
+env/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+
+# Generated content packages
+outputs/*
+!outputs/.gitkeep
+
+# Local jobs, logs, daemon state, screenshots, and browser sessions
+data/*
+!data/.gitkeep
+
+# Editor and operating-system files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.log
