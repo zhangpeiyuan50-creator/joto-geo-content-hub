@@ -155,9 +155,130 @@
     .article-module p { margin-top: 7px; color: var(--muted); font-size: 10px; line-height: 1.5; }
     .empty { padding: 28px; color: var(--muted); text-align: center; font-size: 12px; }
     .muted { color: var(--muted); font-size: 11px; }
-    @media (max-width: 1240px) { .app { grid-template-columns: 1fr; } .sidebar { display: none; } .module-grid { grid-template-columns: repeat(2, 1fr); } .kpis { grid-template-columns: repeat(3, 1fr); } }
-    @media (max-width: 860px) { .topbar { padding: 14px 16px; } .topbar p, #refresh-time { display: none; } main { padding: 18px 14px 40px; } .hero, .operations { grid-template-columns: 1fr; } .hero-copy h2 { font-size: 30px; } .publish-grid { grid-template-columns: 1fr; } .package-body { grid-template-columns: 1fr; } .cover-module { border-right: 0; border-bottom: 1px solid var(--line); } }
-    @media (max-width: 580px) { .module-grid, .kpis { grid-template-columns: 1fr; } .article-modules { grid-template-columns: 1fr; } .article-module, .article-module:nth-child(3) { border-right: 0; } .article-module.wide { grid-column: span 1; } .job-row { grid-template-columns: 1fr auto; } .job-stat { display: none; } }
+    .analytics-shell { display: grid; gap: 16px; }
+    .analytics-toolbar { padding: 17px 18px; border: 1px solid var(--line); border-radius: 8px; background: #fff; display: flex; align-items: center; justify-content: space-between; gap: 16px; box-shadow: var(--shadow); }
+    .analytics-context { display: flex; align-items: center; gap: 12px; min-width: 0; }
+    .analytics-context-mark { width: 36px; height: 36px; flex: 0 0 auto; border-radius: 7px; background: var(--blue-soft); color: var(--blue); display: grid; place-items: center; font-weight: 800; }
+    .analytics-context strong { display: block; font-size: 13px; }
+    .analytics-context span { display: block; margin-top: 3px; color: var(--muted); font-size: 10px; }
+    .analytics-kpis { display: grid; grid-template-columns: repeat(6, minmax(112px, 1fr)); gap: 10px; }
+    .analytics-metric { min-height: 94px; padding: 14px 15px; border: 1px solid var(--line); border-radius: 8px; background: #fff; box-shadow: 0 7px 20px rgba(19,27,38,.04); }
+    .analytics-metric.alert { background: #fffaf8; }
+    .analytics-metric span { color: var(--muted); font-size: 10px; }
+    .analytics-metric strong { display: block; margin-top: 12px; font: 600 25px Georgia, "Microsoft YaHei", serif; }
+    .analytics-metric small { display: block; margin-top: 4px; color: #9299a5; font-size: 9px; }
+    .analytics-grid { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 16px; align-items: start; }
+    .analytics-span-7 { grid-column: span 7; }
+    .analytics-span-5 { grid-column: span 5; }
+    .analytics-span-8 { grid-column: span 8; }
+    .analytics-span-4 { grid-column: span 4; }
+    .analytics-panel { overflow: visible; }
+    .analytics-panel .panel-head { min-height: 72px; }
+    .panel-note { color: var(--muted); font-size: 10px; white-space: nowrap; }
+    .analytics-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+    .analytics-actions .button { min-height: 38px; }
+    .platform-cards { display: grid; gap: 0; }
+    .platform-card { padding: 17px 18px; border-bottom: 1px solid var(--line); display: grid; grid-template-columns: 128px minmax(100px,.65fr) minmax(0,1.35fr); gap: 18px; align-items: center; transition: background .16s ease; }
+    .platform-card:last-child { border-bottom: 0; }
+    .platform-card:hover { background: #fafbfd; }
+    .platform-identity { display: flex; align-items: center; gap: 10px; }
+    .platform-icon { width: 34px; height: 34px; flex: 0 0 auto; border-radius: 7px; display: grid; place-items: center; background: var(--blue-soft); color: var(--blue); font-weight: 800; }
+    .platform-card.csdn .platform-icon { background: var(--orange-soft); color: #ad5312; }
+    .platform-card.sohu .platform-icon { background: var(--green-soft); color: var(--green); }
+    .platform-identity strong { font-size: 12px; }
+    .platform-identity small { display: block; margin-top: 3px; color: var(--muted); font-size: 9px; }
+    .platform-primary span { display: block; color: var(--muted); font-size: 9px; }
+    .platform-primary strong { display: block; margin-top: 3px; font: 600 23px Georgia, serif; }
+    .platform-stats { display: grid; grid-template-columns: repeat(4, minmax(48px,1fr)); gap: 8px; }
+    .platform-stat { min-width: 0; }
+    .platform-stat span { display: block; color: var(--muted); font-size: 9px; }
+    .platform-stat strong { display: block; margin-top: 4px; font-size: 11px; }
+    .activity-track { grid-column: 1 / -1; height: 4px; margin-top: 4px; overflow: hidden; border-radius: 999px; background: #edf0f4; }
+    .activity-bar { display: block; height: 100%; min-width: 0; border-radius: inherit; background: var(--blue); }
+    .platform-card.csdn .activity-bar { background: #d86c21; }
+    .platform-card.sohu .activity-bar { background: var(--green); }
+    .llm-grid { padding: 14px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .llm-card { min-width: 0; padding: 14px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface-2); transition: transform .16s ease, border-color .16s ease; }
+    .llm-card:hover { transform: translateY(-1px); border-color: #bec6d1; }
+    .llm-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+    .llm-head h4 { font-size: 12px; }
+    .llm-head small { display: block; margin-top: 4px; color: var(--muted); font-size: 9px; }
+    .score-ring { --score: 0; width: 48px; height: 48px; flex: 0 0 auto; border-radius: 50%; background: conic-gradient(var(--blue) calc(var(--score) * 1%), #e3e7ed 0); display: grid; place-items: center; }
+    .score-ring::after { content: attr(data-score); width: 38px; height: 38px; border-radius: 50%; background: var(--surface-2); display: grid; place-items: center; font: 600 15px Georgia, serif; }
+    .score-ring.high { background: conic-gradient(var(--green) calc(var(--score) * 1%), #e3e7ed 0); }
+    .score-ring.low { background: conic-gradient(var(--red) calc(var(--score) * 1%), #e3e7ed 0); }
+    .geo-badge { min-height: 23px; margin-top: 10px; padding: 0 8px; border-radius: 999px; display: inline-flex; align-items: center; background: var(--blue-soft); color: var(--blue); font-size: 9px; font-weight: 700; }
+    .geo-badge.high { color: var(--green); background: var(--green-soft); }
+    .geo-badge.low { color: var(--red); background: var(--red-soft); }
+    .stage-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 5px; margin-top: 12px; }
+    .stage-cell { min-height: 38px; padding: 6px; border: 1px solid var(--line); border-radius: 6px; background: #fff; text-align: center; }
+    .stage-cell span { display: block; color: var(--muted); font-size: 8px; }
+    .stage-cell strong { display: block; margin-top: 3px; font-size: 10px; }
+    .llm-actions { display: flex; gap: 6px; margin-top: 10px; }
+    .llm-actions .tiny-link { flex: 1; justify-content: center; padding: 0 6px; }
+    .job-analytics { display: grid; gap: 14px; padding: 18px; }
+    .job-monitor-head { padding-bottom: 13px; border-bottom: 1px solid var(--line); }
+    .job-monitor-head strong { display: block; font-size: 12px; line-height: 1.45; overflow-wrap: anywhere; }
+    .job-monitor-head span { display: block; margin-top: 5px; color: var(--muted); font-size: 9px; }
+    .url-registry { display: grid; gap: 8px; }
+    .url-row { display: grid; grid-template-columns: 92px minmax(0, 1fr) auto auto; gap: 8px; align-items: center; padding: 9px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface-2); }
+    .url-platform { display: flex; align-items: center; gap: 8px; font-size: 11px; font-weight: 700; }
+    .url-platform i { width: 25px; height: 25px; border-radius: 6px; background: #fff; border: 1px solid var(--line); display: grid; place-items: center; font-style: normal; }
+    .url-row input { width: 100%; min-width: 0; min-height: 36px; padding: 0 10px; border: 1px solid var(--line); border-radius: 7px; background: #fff; font-size: 10px; }
+    .url-row input:focus { outline: 2px solid #d5e5ff; border-color: var(--blue); }
+    .url-state { min-height: 25px; padding: 0 8px; border-radius: 999px; display: inline-flex; align-items: center; color: #9a5c17; background: #fff1df; font-size: 9px; font-weight: 700; white-space: nowrap; }
+    .url-state.saved { color: var(--green); background: var(--green-soft); }
+    .save-url { width: 36px; min-height: 36px; padding: 0; }
+    .monitor-footer { padding-top: 2px; display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .monitor-footer small { color: var(--muted); font-size: 9px; }
+    .evidence-list { display: grid; gap: 8px; }
+    .evidence-title { margin-top: 2px; font-size: 11px; }
+    .evidence-item { padding: 12px; border: 1px solid var(--line); border-radius: 7px; background: var(--surface-2); }
+    .evidence-item strong { font-size: 10px; }
+    .evidence-item p { margin-top: 6px; color: var(--muted); font-size: 10px; line-height: 1.55; }
+    .alert-list { display: grid; gap: 8px; padding: 14px; }
+    .alert-item { padding: 11px 12px; border: 1px solid #f1d5a7; border-radius: 7px; background: #fffaf1; font-size: 10px; line-height: 1.55; }
+    .alert-item strong { display: flex; align-items: center; gap: 7px; }
+    .alert-item strong::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: #e08a26; }
+    .alert-item small { display: block; margin-top: 5px; color: var(--muted); }
+    .alert-empty { padding: 25px 18px; display: flex; align-items: center; gap: 12px; }
+    .alert-empty-mark { width: 34px; height: 34px; border-radius: 50%; background: var(--green-soft); color: var(--green); display: grid; place-items: center; font-weight: 800; }
+    .alert-empty strong { display: block; font-size: 11px; }
+    .alert-empty span { display: block; margin-top: 3px; color: var(--muted); font-size: 9px; }
+    .page-section { display: none !important; }
+    .page-section.page-visible { display: grid !important; }
+    .page-heading { display: flex; align-items: end; justify-content: space-between; gap: 18px; }
+    .page-heading h2 { font: 500 30px Georgia, "Microsoft YaHei", serif; }
+    .page-heading p { margin-top: 6px; color: var(--muted); font-size: 12px; }
+    .detail-shell { gap: 16px; }
+    .detail-summary { padding: 22px; background: #fff; border: 1px solid var(--line); border-radius: 8px; box-shadow: var(--shadow); }
+    .detail-summary-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 20px; }
+    .detail-summary h2 { max-width: 980px; font-size: 22px; line-height: 1.45; }
+    .detail-meta { margin-top: 10px; display: flex; gap: 14px; flex-wrap: wrap; color: var(--muted); font-size: 11px; }
+    .detail-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 18px; }
+    .system-page-grid { grid-template-columns: minmax(300px,.75fr) minmax(0,1.25fr); gap: 16px; align-items: start; }
+    .system-page-grid .system-panel { min-height: 300px; }
+    body[data-page="dashboard"] #jobs, body[data-page="jobs"] #jobs, body[data-page="publish"] #jobs { grid-template-columns: 1fr; }
+    body[data-page="dashboard"] #jobs .side-stack, body[data-page="jobs"] #jobs .side-stack, body[data-page="publish"] #jobs .side-stack { display: none; }
+    body[data-page="dashboard"] .hero { order: 1; }
+    body[data-page="dashboard"] #kpis { order: 2; }
+    body[data-page="dashboard"] #jobs { order: 3; }
+    body[data-page="dashboard"] .modules-section[data-pages*="dashboard"] { order: 4; }
+    body[data-page="dashboard"] .hero-copy { min-height: 210px; padding: 24px; }
+    body[data-page="dashboard"] .hero-copy h2 { font-size: 32px; }
+    body[data-page="dashboard"] .module-card { min-height: 142px; }
+    body[data-page="dashboard"] .module-card p { min-height: 0; }
+    body[data-page="dashboard"] .metric { min-height: 96px; padding: 15px; }
+    body[data-page="dashboard"] .metric strong { margin-top: 11px; font-size: 25px; }
+    body[data-page="analytics"] .analytics-span-4 { grid-column: span 12; }
+    body[data-page="analytics"] #monitor-alerts { grid-template-columns: repeat(2,minmax(0,1fr)); }
+    body[data-page="job-detail"] #job-detail { order: 1; }
+    body[data-page="job-detail"] #content { order: 2; }
+    body[data-page="job-detail"] #publish { order: 3; }
+    body[data-page="job-detail"] #job-monitor { order: 4; }
+    @media (max-width: 1240px) { .app { grid-template-columns: 1fr; } .sidebar { display: none; } .module-grid { grid-template-columns: repeat(2, 1fr); } .kpis, .analytics-kpis { grid-template-columns: repeat(3, 1fr); } .analytics-span-7, .analytics-span-5, .analytics-span-8, .analytics-span-4 { grid-column: span 12; } }
+    @media (max-width: 860px) { .topbar { padding: 14px 16px; } .topbar p, #refresh-time { display: none; } main { padding: 18px 14px 40px; } .hero, .operations, .system-page-grid { grid-template-columns: 1fr; } .hero-copy h2 { font-size: 30px; } .publish-grid { grid-template-columns: 1fr; } .package-body { grid-template-columns: 1fr; } .cover-module { border-right: 0; border-bottom: 1px solid var(--line); } .analytics-toolbar { align-items: flex-start; flex-direction: column; } .platform-card { grid-template-columns: 118px minmax(90px,.55fr) minmax(0,1.45fr); } .url-row { grid-template-columns: 82px minmax(0,1fr) auto; } .url-state { grid-column: 2; grid-row: 2; justify-self: start; } .save-url { grid-column: 3; grid-row: 1 / span 2; } body[data-page="analytics"] #monitor-alerts { grid-template-columns: 1fr; } }
+    @media (max-width: 580px) { .module-grid, .kpis, .analytics-kpis { grid-template-columns: 1fr; } .article-modules { grid-template-columns: 1fr; } .article-module, .article-module:nth-child(3) { border-right: 0; } .article-module.wide { grid-column: span 1; } .job-row { grid-template-columns: 1fr auto; } .job-stat { display: none; } .platform-card { grid-template-columns: 1fr 1fr; gap: 12px; } .platform-stats { grid-column: 1 / -1; } .llm-grid { grid-template-columns: 1fr; } .url-row { grid-template-columns: 1fr auto; } .url-platform { grid-column: 1; } .url-row input { grid-column: 1 / -1; grid-row: 2; } .url-state { grid-column: 1; grid-row: 3; } .save-url { grid-column: 2; grid-row: 1; } }
   </style>
 </head>
 <body>
@@ -166,24 +287,26 @@
       <div class="brand"><div class="brand-mark">J</div><div><strong>JOTO</strong><small>GEO Content Hub</small></div></div>
       <div class="nav-label">Workspace</div>
       <nav class="nav">
-        <button id="nav-all" class="active" onclick="selectModule('all')"><span class="nav-dot"></span>全站总览</button>
-        <div id="module-nav"></div>
-        <a href="#publish"><span class="nav-dot"></span>平台发布</a>
-        <a href="#jobs"><span class="nav-dot"></span>任务中心</a>
-        <a href="#content"><span class="nav-dot"></span>内容资产</a>
+        <a id="nav-dashboard" href="/"><span class="nav-dot"></span>今日工作台</a>
+        <a id="nav-jobs" href="/jobs"><span class="nav-dot"></span>任务中心</a>
+        <a id="nav-publish" href="/publish"><span class="nav-dot"></span>平台发布</a>
+        <a id="nav-analytics" href="/analytics"><span class="nav-dot"></span>传播与 GEO</a>
+        <a id="nav-system" href="/system"><span class="nav-dot"></span>系统状态</a>
       </nav>
-      <div class="sidebar-foot">热点采集 → 独立 Dify Workflow → Unsplash 配图 → 人工审核 → 三平台发布辅助</div>
+      <div class="nav-label">Content Profiles</div>
+      <nav id="module-nav" class="nav"></nav>
+      <div class="sidebar-foot">热点采集 → 独立 Dify Workflow → Unsplash 配图 → 三平台发布辅助</div>
     </aside>
     <div class="workspace">
       <header class="topbar">
-        <div><h1>JOTO 多内容 GEO 工作台</h1><p>Content Operations · 四个内容模块统一生产、审核与分发</p></div>
+        <div><h1 id="page-title">JOTO 多内容 GEO 工作台</h1><p id="page-subtitle">Content Operations · 四个内容模块统一生产与分发</p></div>
         <div class="top-actions"><span class="live">系统在线</span><span id="refresh-time" class="muted">正在同步</span><button class="icon-button" onclick="loadDashboard()" title="刷新数据">↻</button></div>
       </header>
       <main>
-        <section class="hero">
+        <section class="hero page-section" data-pages="dashboard">
           <div class="hero-copy">
             <div><span class="eyebrow">JOTO GEO CONTENT OPERATIONS</span><h2 id="hero-title">一个工作台，管理四条 GEO 内容生产线</h2><p id="hero-copy">保留 FasiumAI 内容能力，并统一管理 WorkBuddy、腾讯云 ADP 与 Dify 的合作服务内容。</p></div>
-            <div class="hero-actions"><button id="run-button" class="button" onclick="startRun()">▶ 生成当前模块内容</button><a class="button light" href="#jobs">查看任务</a><a class="button light" href="#publish">前往发布</a></div>
+            <div class="hero-actions"><button id="run-button" class="button" onclick="startRun()">▶ 生成当前模块内容</button><a class="button light" href="/jobs">查看任务</a><a class="button light" href="/publish">前往发布</a></div>
           </div>
           <div class="system-panel">
             <div class="system-head"><div><span class="eyebrow">SYSTEM LAYER</span><h2>Scheduler</h2></div><span id="scheduler-status" class="status stopped">读取中</span></div>
@@ -191,39 +314,75 @@
           </div>
         </section>
 
-        <section class="modules-section">
-          <div class="section-head"><div><h2>内容矩阵</h2><p>选择模块后，任务、内容、审核和发布都会自动切换到对应生产线。</p></div><span class="eyebrow">4 CONTENT PROFILES</span></div>
+        <section class="modules-section page-section" data-pages="dashboard,jobs,publish">
+          <div class="section-head"><div><h2>内容矩阵</h2><p>选择模块后，任务、内容和发布都会自动切换到对应生产线。</p></div><span class="eyebrow">4 CONTENT PROFILES</span></div>
           <div id="module-cards" class="module-grid"></div>
         </section>
 
-        <section id="kpis" class="kpis"></section>
+        <section id="kpis" class="kpis page-section" data-pages="dashboard"></section>
 
-        <section id="jobs" class="operations">
-          <div class="panel"><div class="panel-head"><div><h3>最近任务</h3><p>选择一个已生成 Job，用于审核、预览和发布</p></div><span id="selected-job-label" class="eyebrow">尚未选择</span></div><div id="jobs-list" class="jobs"></div></div>
+        <section id="analytics" class="analytics-shell page-section" data-pages="analytics">
+          <div class="section-head">
+            <div><h2>传播与 GEO 分析</h2><p>监测三平台内容热度，以及元宝、Kimi、DeepSeek、豆包的联网引用表现。</p></div>
+            <span class="eyebrow">DISTRIBUTION & VISIBILITY</span>
+          </div>
+          <div class="analytics-toolbar">
+            <div class="analytics-context"><span class="analytics-context-mark">G</span><div><strong id="analytics-scope">全站分析</strong><span id="analytics-updated">等待数据同步</span></div></div>
+            <div class="analytics-actions"><button id="monitor-engagement-all" class="button light" onclick="runMonitor('engagement')">↻ 刷新全站热度</button><button id="monitor-geo-all" class="button" onclick="runMonitor('geo')">执行 GEO 检测</button></div>
+          </div>
+          <div id="analytics-kpis" class="analytics-kpis"></div>
+          <div class="analytics-grid">
+            <div class="panel analytics-panel analytics-span-7"><div class="panel-head"><div><h3>平台传播表现</h3><p>知乎、CSDN、搜狐号最新有效快照</p></div><span class="panel-note">Engagement</span></div><div id="platform-analytics"></div></div>
+            <div class="panel analytics-panel analytics-span-5"><div class="panel-head"><div><h3>LLM 可见性</h3><p>最新结果与 D+7 / D+14 / D+30 检测阶段</p></div><span class="panel-note">GEO Score</span></div><div id="geo-analytics"></div></div>
+          </div>
+          <div class="analytics-grid"><div class="panel analytics-panel analytics-span-4"><div class="panel-head"><div><h3>监测待办</h3><p>登录失效、采集失败与新引用</p></div><span id="alert-count" class="status success">0 项</span></div><div id="monitor-alerts" class="alert-list"></div></div></div>
+        </section>
+
+        <section id="jobs" class="operations page-section" data-pages="dashboard,jobs,publish">
+          <div class="panel"><div class="panel-head"><div><h3 id="jobs-heading">今日任务</h3><p id="jobs-copy">优先处理今天生成和待发布的内容</p></div><span id="selected-job-label" class="eyebrow">点击进入详情</span></div><div id="jobs-list" class="jobs"></div></div>
           <div class="side-stack">
             <div class="panel"><div class="panel-head"><div><h3>资源概览</h3><p>当前筛选范围</p></div></div><div id="assets" class="asset-grid"></div></div>
             <div class="panel"><div class="panel-head"><div><h3>本次运行日志</h3><p>Generation Logs</p></div></div><pre id="logs" class="logs">正在读取...</pre></div>
           </div>
         </section>
 
-        <section id="publish" class="modules-section">
-          <div class="section-head"><div><h2>平台发布中心</h2><p id="publish-note">先选择模块和 Job。合作内容通过人工审核后才可启动发布辅助。</p></div><span class="eyebrow">HUMAN IN THE LOOP</span></div>
+        <section id="publish" class="modules-section page-section" data-pages="publish,job-detail">
+          <div class="section-head"><div><h2>平台发布中心</h2><p id="publish-note">选择模块和 Job 后，即可启动对应平台的发布辅助。</p></div><span class="eyebrow">ASSISTED PUBLISHING</span></div>
           <div id="publish-platforms" class="publish-grid"></div>
         </section>
 
-        <section id="content" class="modules-section">
-          <div class="section-head"><div><h2>内容资产库</h2><p>文章、封面、署名、Prompt 与 metadata 按 Content Package 统一展示。</p></div></div>
+        <section id="job-detail" class="detail-shell page-section" data-pages="job-detail">
+          <div id="job-detail-summary" class="detail-summary"><div class="empty">正在读取 Job...</div></div>
+        </section>
+
+        <section id="content" class="modules-section page-section" data-pages="job-detail">
+          <div class="section-head"><div><h2>内容资产</h2><p>文章、封面、署名、Prompt 与 metadata 集中在当前 Job。</p></div></div>
           <div id="outputs" class="outputs"></div>
+        </section>
+
+        <section id="job-monitor" class="panel analytics-panel page-section" data-pages="job-detail">
+          <div class="panel-head"><div><h3>文章登记与效果监测</h3><p>登记公开链接后刷新热度或执行 GEO 检测</p></div><span id="job-monitor-status" class="status pending">待补录</span></div>
+          <div id="job-analytics" class="job-analytics"><div class="empty">正在读取监测数据</div></div>
+        </section>
+
+        <section id="system-page" class="system-page-grid page-section" data-pages="system">
+          <div class="system-panel"><div class="system-head"><div><span class="eyebrow">SYSTEM LAYER</span><h2>Scheduler</h2></div><span id="system-scheduler-status" class="status stopped">读取中</span></div><div id="system-scheduler-grid" class="system-grid"></div></div>
+          <div class="panel"><div class="panel-head"><div><h3>系统运行日志</h3><p>System & Generation Logs</p></div></div><pre id="system-logs" class="logs">正在读取...</pre></div>
         </section>
       </main>
     </div>
   </div>
   <script>
+    const routePath = location.pathname.replace(/\/$/, "") || "/";
+    const currentPage = routePath.startsWith("/jobs/") ? "job-detail" : ({"/":"dashboard","/jobs":"jobs","/analytics":"analytics","/publish":"publish","/system":"system"}[routePath] || "dashboard");
+    const routeJobId = currentPage === "job-detail" ? decodeURIComponent(routePath.split("/").pop()) : "";
     let currentModule = new URLSearchParams(location.search).get("module") || "all";
-    let selectedJob = "";
+    let selectedJob = routeJobId;
     let dashboardData = null;
+    const urlDrafts = {};
+    const monitorRunning = {engagement:false, geo:false};
     const escapeHtml = value => String(value ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-    const statusText = value => ({idle:"待命",running:"进行中",success:"成功",generated:"已生成",failed:"失败",stopped:"已停止",pending:"待审核",approved:"已审核",not_required:"无需审核",ready:"待确认",manual:"手动模式"}[value] || value || "未知");
+    const statusText = value => ({idle:"待命",running:"进行中",success:"成功",generated:"已生成",failed:"失败",stopped:"已停止",pending:"待处理",approved:"已完成",not_required:"可发布",ready:"待确认",manual:"手动模式"}[value] || value || "未知");
     const statusClass = value => ["success","generated","approved","not_required","ready"].includes(value) ? "success" : value === "pending" ? "pending" : value === "failed" || value === "stopped" ? "failed" : "running";
     const metric = (label, value, note) => `<article class="metric"><span>${label}</span><strong>${value}</strong><small>${note || ""}</small></article>`;
     const systemItem = (label, value) => `<div class="system-item"><span>${label}</span><strong>${escapeHtml(value || "-")}</strong></div>`;
@@ -235,6 +394,16 @@
       const response = await fetch(`/api/dashboard?module=${encodeURIComponent(currentModule)}`, {cache:"no-store"});
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || `HTTP ${response.status}`);
+      if (currentPage === "job-detail") {
+        const detailResponse = await fetch(`/api/jobs/${encodeURIComponent(routeJobId)}`, {cache:"no-store"});
+        const detail = await detailResponse.json();
+        if (!detailResponse.ok) throw new Error(detail.error || "Job 不存在");
+        selectedJob = detail.job.job_id;
+        currentModule = detail.job.module_id;
+        data.selected_module = currentModule;
+        data.job_layer = [detail.job];
+        data.content_layer = detail.content_package ? [detail.content_package] : [];
+      }
       dashboardData = data;
       if (selectedJob && !data.job_layer.some(job => job.job_id === selectedJob)) selectedJob = "";
       if (!selectedJob) selectedJob = data.job_layer.find(job => job.status === "success")?.job_id || "";
@@ -242,22 +411,46 @@
     }
 
     function render(data) {
+      applyPageLayout();
       document.getElementById("refresh-time").textContent = `更新于 ${data.generated_at.slice(11,19)}`;
       renderModuleNav(data.modules); renderModuleCards(data.modules); renderHero(data.modules);
       renderScheduler(data.system_layer.scheduler); renderKpis(data.kpis); renderJobs(data.job_layer);
       renderAssets(data.asset_layer); renderPublish(data.publish_layer); renderOutputs(data.content_layer);
+      renderAnalytics(data.analytics_layer);
       document.getElementById("logs").textContent = data.run_state.logs || data.system_layer.logs.system || "暂无日志";
+      document.getElementById("system-logs").textContent = data.system_layer.logs.system || data.run_state.logs || "暂无日志";
       document.getElementById("run-button").disabled = currentModule === "all" || Boolean(data.run_state.running);
+      if (currentPage === "job-detail") renderJobDetail();
+    }
+
+    function applyPageLayout() {
+      document.body.dataset.page = currentPage;
+      document.querySelectorAll(".page-section").forEach(section => {
+        const pages = (section.dataset.pages || "").split(",");
+        section.classList.toggle("page-visible", pages.includes(currentPage));
+      });
+      const pageCopy = {
+        dashboard:["今日工作台","Today · 生成、发布与异常处理"],
+        jobs:["任务中心","Jobs · 查看全部内容任务并进入独立详情"],
+        analytics:["传播与 GEO 分析","Analytics · 平台传播与 LLM 可见性"],
+        publish:["平台发布中心","Publishing · 选择任务后启动发布辅助"],
+        system:["系统状态","System · Scheduler、心跳与运行日志"],
+        "job-detail":["Job 详情","Content Package · 内容、发布与监测"]
+      }[currentPage];
+      document.getElementById("page-title").textContent = pageCopy[0];
+      document.getElementById("page-subtitle").textContent = pageCopy[1];
+      ["dashboard","jobs","publish","analytics","system"].forEach(page => document.getElementById(`nav-${page}`)?.classList.toggle("active", currentPage === page || (page === "jobs" && currentPage === "job-detail")));
+      document.getElementById("jobs-heading").textContent = currentPage === "dashboard" ? "今日任务" : currentPage === "publish" ? "选择发布任务" : "全部任务";
+      document.getElementById("jobs-copy").textContent = currentPage === "dashboard" ? "优先处理今天生成和待发布的内容" : "点击任务进入完整 Job 详情页面";
     }
 
     function renderModuleNav(modules) {
-      document.getElementById("nav-all").classList.toggle("active", currentModule === "all");
       document.getElementById("module-nav").innerHTML = modules.map(item => `<button class="${currentModule === item.id ? "active" : ""}" onclick="selectModule('${item.id}')"><span class="nav-dot"></span>${escapeHtml(item.short_name)}</button>`).join("");
     }
 
     function renderModuleCards(modules) {
       const symbols = {fasium:"F",workbuddy_joto:"W",adp_joto:"A",dify_joto:"D"};
-      document.getElementById("module-cards").innerHTML = modules.map(item => `<button class="module-card ${item.color} ${currentModule === item.id ? "active" : ""}" onclick="selectModule('${item.id}')"><div class="module-top"><span class="module-symbol">${symbols[item.id] || "J"}</span><span class="status ${item.pending_review ? "pending" : "success"}">${item.pending_review ? `${item.pending_review} 待审核` : "就绪"}</span></div><h3>${escapeHtml(item.name)}</h3><p>${escapeHtml(item.description)}</p><div class="module-stats"><span>今日 ${item.today_jobs}</span><span>成功 ${item.success}</span><span>${item.schedule}</span></div></button>`).join("");
+      document.getElementById("module-cards").innerHTML = modules.map(item => `<button class="module-card ${item.color} ${currentModule === item.id ? "active" : ""}" onclick="selectModule('${item.id}')"><div class="module-top"><span class="module-symbol">${symbols[item.id] || "J"}</span><span class="status success">就绪</span></div><h3>${escapeHtml(item.name)}</h3><p>${escapeHtml(item.description)}</p><div class="module-stats"><span>今日 ${item.today_jobs}</span><span>成功 ${item.success}</span><span>${item.schedule}</span></div></button>`).join("");
     }
 
     function renderHero(modules) {
@@ -270,18 +463,24 @@
       const pill = document.getElementById("scheduler-status");
       pill.className = `status ${statusClass(s.status)}`; pill.textContent = statusText(s.status);
       const next = currentModule !== "all" ? (s.next_runs?.[currentModule] || s.next_run) : s.next_run;
-      document.getElementById("scheduler-grid").innerHTML = [systemItem("运行模式", statusText(s.mode)), systemItem("下次运行", next), systemItem("最近模块", s.last_module), systemItem("心跳 / PID", `${s.heartbeat} / ${s.pid}`)].join("");
+      const items = [systemItem("运行模式", statusText(s.mode)), systemItem("下次运行", next), systemItem("最近模块", s.last_module), systemItem("心跳 / PID", `${s.heartbeat} / ${s.pid}`)].join("");
+      document.getElementById("scheduler-grid").innerHTML = items;
+      const systemPill = document.getElementById("system-scheduler-status"); systemPill.className = pill.className; systemPill.textContent = pill.textContent;
+      document.getElementById("system-scheduler-grid").innerHTML = items;
     }
 
     function renderKpis(k) {
-      document.getElementById("kpis").innerHTML = [metric("今日 Job", k.today_jobs, `${k.running} 个执行中`),metric("内容成功率", `${k.success_rate}%`, `${k.success} 成功 · ${k.failed} 失败`),metric("平均耗时", k.avg_duration_label, "Dify workflow"),metric("封面成功率", `${k.image_success_rate}%`, "Unsplash assets"),metric("Dify 成功率", `${k.dify_success_rate}%`, "Workflow API"),metric("待审核", k.pending_review, "合作声明确认")].join("");
+      document.getElementById("kpis").innerHTML = [metric("今日 Job", k.today_jobs, `${k.running} 个执行中`),metric("内容成功率", `${k.success_rate}%`, `${k.success} 成功 · ${k.failed} 失败`),metric("平均耗时", k.avg_duration_label, "Dify workflow"),metric("封面成功率", `${k.image_success_rate}%`, "Unsplash assets"),metric("Dify 成功率", `${k.dify_success_rate}%`, "Workflow API"),metric("待发布", k.ready_to_publish, "可直接启动发布辅助")].join("");
     }
 
     function renderJobs(jobs) {
       const root = document.getElementById("jobs-list");
-      if (!jobs.length) { root.innerHTML = `<div class="empty">当前模块暂无任务</div>`; document.getElementById("selected-job-label").textContent = "尚未选择"; return; }
-      root.innerHTML = jobs.map(job => `<button class="job-row ${selectedJob === job.job_id ? "selected" : ""}" onclick="selectJob('${job.job_id}')"><div><div class="job-title">${escapeHtml(job.topic?.title || job.job_id)}</div><div class="job-sub"><span>${escapeHtml(job.module_name)}</span><span>${escapeHtml(job.job_id)}</span><span>${escapeHtml(job.created_time)}</span><span class="status ${statusClass(job.review_status)}">${statusText(job.review_status)}</span></div></div><div class="job-stat"><span>耗时 / 输出</span><strong>${escapeHtml(job.duration_label)} · ${job.output_count}</strong></div><span class="status ${statusClass(job.status)}">${statusText(job.status)}</span></button>`).join("");
-      const job = jobs.find(item => item.job_id === selectedJob); document.getElementById("selected-job-label").textContent = job ? `已选 ${job.job_id}` : "尚未选择";
+      const now = new Date();
+      const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+      const visibleJobs = currentPage === "dashboard" ? jobs.filter(job => String(job.created_time || "").startsWith(today)).slice(0,6) : jobs.slice(0,12);
+      if (!visibleJobs.length) { root.innerHTML = `<div class="empty">${currentPage === "dashboard" ? "今天还没有内容任务" : "当前模块暂无任务"}</div>`; document.getElementById("selected-job-label").textContent = "暂无任务"; return; }
+      root.innerHTML = visibleJobs.map(job => `<button class="job-row" onclick="selectJob('${job.job_id}')"><div><div class="job-title">${escapeHtml(job.topic?.title || job.job_id)}</div><div class="job-sub"><span>${escapeHtml(job.module_name)}</span><span>${escapeHtml(job.created_time)}</span></div></div><div class="job-stat"><span>耗时 / 输出</span><strong>${escapeHtml(job.duration_label)} · ${job.output_count}</strong></div><span class="status ${statusClass(job.status)}">${statusText(job.status)}</span></button>`).join("");
+      document.getElementById("selected-job-label").textContent = `${visibleJobs.length} 个任务`;
     }
 
     function renderAssets(a) { document.getElementById("assets").innerHTML = [assetItem("图片",a.images),assetItem("文章",a.html_md_outputs),assetItem("元数据",a.json_metadata),assetItem("提示词",a.text_prompts)].join(""); }
@@ -289,19 +488,113 @@
     function renderPublish(layer) {
       const job = dashboardData?.job_layer.find(item => item.job_id === selectedJob);
       const descriptions = {zhihu:"行业观察和专业观点，填入知乎富文本编辑器。",csdn:"技术流程和工具链分析，填入 Markdown 编辑器。",sohu:"大众化行业解读，填入搜狐号富文本编辑器。"};
-      document.getElementById("publish-platforms").innerHTML = ["zhihu","csdn","sohu"].map(platform => { const p = layer[platform]; const blocked = !job || job.status !== "success" || job.review_status === "pending" || p.running; return `<article class="publish-item ${p.accent}"><div class="publish-title"><h3>${escapeHtml(p.name)}</h3><span class="status ${statusClass(p.status)}">${statusText(p.status)}</span></div><p>${descriptions[platform]}</p><button class="button" data-platform="${platform}" onclick="startPublish('${platform}')" ${blocked ? "disabled" : ""}>${p.running ? "正在启动编辑器..." : `发布所选 Job 到${escapeHtml(p.name)}`}</button><div class="publish-message">${job?.review_status === "pending" ? "请先审核合作声明" : escapeHtml(p.message)}</div></article>`; }).join("");
+      document.getElementById("publish-platforms").innerHTML = ["zhihu","csdn","sohu"].map(platform => { const p = layer[platform]; const blocked = !job || job.status !== "success" || p.running; return `<article class="publish-item ${p.accent}"><div class="publish-title"><h3>${escapeHtml(p.name)}</h3><span class="status ${statusClass(p.status)}">${statusText(p.status)}</span></div><p>${descriptions[platform]}</p><button class="button" data-platform="${platform}" onclick="startPublish('${platform}')" ${blocked ? "disabled" : ""}>${p.running ? "正在启动编辑器..." : `发布所选 Job 到${escapeHtml(p.name)}`}</button><div class="publish-message">${escapeHtml(p.message)}</div></article>`; }).join("");
     }
 
     function renderOutputs(outputs) {
       const root = document.getElementById("outputs"); if (!outputs.length) { root.innerHTML = `<div class="empty">当前模块暂无内容资产</div>`; return; }
-      root.innerHTML = outputs.map(output => { const content=output.content_layer, cover=content.cover_image, image=cover.image, articles=content.article; const pending=output.review_status === "pending"; return `<article class="content-package"><header class="package-head"><div><h3>${escapeHtml(output.title)}</h3><p>${escapeHtml(output.module_name)} · ${escapeHtml(output.created_at)} · Job ${escapeHtml(output.job_id)}</p></div><div class="package-statuses"><span class="status ${statusClass(output.review_status)}">${statusText(output.review_status)}</span>${pending ? `<button class="button approve" onclick="approveJob('${output.job_id}')">确认合作表述</button>` : ""}</div></header><div class="package-body"><section class="cover-module"><div class="module-label"><span>封面图 Cover</span><span>${escapeHtml(cover.source || "Unsplash")}</span></div>${image.exists ? `<a class="cover-preview" href="${image.view_url}" target="_blank"><img src="${image.asset_url}" alt="文章封面"></a>` : `<div class="empty-cover">暂无封面图</div>`}<div class="module-actions">${action(cover.metadata,"图片信息")}${action(cover.attribution,"摄影署名")}${download(image,"下载封面")}</div></section><section class="article-modules"><div class="article-module"><h4>知乎文章</h4><p>富文本 · 行业观察</p><div class="module-actions">${action(articles.zhihu,"查看文章")}</div></div><div class="article-module"><h4>CSDN 文章</h4><p>Markdown · 技术拆解</p><div class="module-actions">${action(articles.csdn,"查看文章")}</div></div><div class="article-module"><h4>搜狐号文章</h4><p>富文本 · 行业解读</p><div class="module-actions">${action(articles.sohu,"查看文章")}</div></div><div class="article-module wide"><h4>Metadata & Prompt</h4><p>主题来源、工作流、审核状态、生成记录与封面提示词。</p><div class="module-actions">${action(content.metadata,"查看元数据")}${action(content.prompt,"查看 Prompt")}${download(content.metadata,"下载 JSON")}</div></div></section></div></article>`; }).join("");
+      root.innerHTML = outputs.map(output => { const content=output.content_layer, cover=content.cover_image, image=cover.image, articles=content.article; return `<article class="content-package"><header class="package-head"><div><h3>${escapeHtml(output.title)}</h3><p>${escapeHtml(output.module_name)} · ${escapeHtml(output.created_at)} · Job ${escapeHtml(output.job_id)}</p></div></header><div class="package-body"><section class="cover-module"><div class="module-label"><span>封面图 Cover</span><span>${escapeHtml(cover.source || "Unsplash")}</span></div>${image.exists ? `<a class="cover-preview" href="${image.view_url}" target="_blank"><img src="${image.asset_url}" alt="文章封面"></a>` : `<div class="empty-cover">暂无封面图</div>`}<div class="module-actions">${action(cover.metadata,"图片信息")}${action(cover.attribution,"摄影署名")}${download(image,"下载封面")}</div></section><section class="article-modules"><div class="article-module"><h4>知乎文章</h4><p>富文本 · 行业观察</p><div class="module-actions">${action(articles.zhihu,"查看文章")}</div></div><div class="article-module"><h4>CSDN 文章</h4><p>Markdown · 技术拆解</p><div class="module-actions">${action(articles.csdn,"查看文章")}</div></div><div class="article-module"><h4>搜狐号文章</h4><p>富文本 · 行业解读</p><div class="module-actions">${action(articles.sohu,"查看文章")}</div></div><div class="article-module wide"><h4>Metadata & Prompt</h4><p>主题来源、工作流、生成记录与封面提示词。</p><div class="module-actions">${action(content.metadata,"查看元数据")}${action(content.prompt,"查看 Prompt")}${download(content.metadata,"下载 JSON")}</div></div></section></div></article>`; }).join("");
     }
 
-    function selectModule(moduleId) { currentModule = moduleId; selectedJob = ""; const url = new URL(location.href); moduleId === "all" ? url.searchParams.delete("module") : url.searchParams.set("module", moduleId); history.replaceState({}, "", url); loadDashboard(); }
-    function selectJob(jobId) { selectedJob = jobId; renderJobs(dashboardData.job_layer); renderPublish(dashboardData.publish_layer); document.getElementById("publish").scrollIntoView({block:"start"}); }
+    function renderJobDetail() {
+      const job = dashboardData?.job_layer[0];
+      const root = document.getElementById("job-detail-summary");
+      if (!job) { root.innerHTML = `<div class="empty">没有找到该 Job</div>`; return; }
+      root.innerHTML = `<div class="detail-summary-top"><div><span class="eyebrow">${escapeHtml(job.module_name)} · JOB DETAIL</span><h2>${escapeHtml(job.topic?.title || job.job_id)}</h2><div class="detail-meta"><span>${escapeHtml(job.job_id)}</span><span>${escapeHtml(job.created_time)}</span><span>耗时 ${escapeHtml(job.duration_label)}</span><span>输出 ${job.output_count}</span></div></div><div class="package-statuses"><span class="status ${statusClass(job.status)}">${statusText(job.status)}</span></div></div><div class="detail-actions"><a class="button light" href="/jobs?module=${encodeURIComponent(job.module_id)}">← 返回任务中心</a><a class="button light" href="#publish">前往发布</a><a class="button light" href="#job-monitor">登记与监测</a></div>`;
+    }
+
+    function formatNumber(value) { return value === null || value === undefined ? "—" : Number(value).toLocaleString("zh-CN"); }
+    function analyticsMetric(label, value, note, alert=false) { return `<article class="analytics-metric ${alert ? "alert" : ""}"><span>${label}</span><strong>${value}</strong><small>${note}</small></article>`; }
+    function scoreClass(score) { return score >= 75 ? "high" : score >= 25 ? "mid" : "low"; }
+    function geoLabel(type) { return ({exact_url:"精确 URL 引用",title_source:"标题与来源",official_source:"官方来源",brand_mention:"品牌提及",absent:"未出现"}[type] || type || "未检测"); }
+    function providerLabel(provider) { return ({yuanbao:"腾讯元宝",kimi:"Kimi",deepseek:"DeepSeek",doubao:"豆包"}[provider] || provider); }
+    function compactTime(value) { return value ? String(value).replace("T", " ").slice(5,16) : "尚未检测"; }
+    function latestBy(items, keyFn) {
+      return items.reduce((acc, item) => {
+        const key = keyFn(item); const current = acc[key];
+        if (!current || String(item.checked_at || "") > String(current.checked_at || "")) acc[key] = item;
+        return acc;
+      }, {});
+    }
+    function renderAnalytics(layer) {
+      const k = layer?.kpis || {};
+      const checks = layer?.geo_checks || [];
+      const hasArticles = Number(k.tracked_articles || 0) > 0;
+      const hasChecks = checks.length > 0;
+      document.getElementById("analytics-kpis").innerHTML = [
+        analyticsMetric("已监测文章", hasArticles ? formatNumber(k.tracked_articles) : "—", "Published URLs"),
+        analyticsMetric("今日阅读增长", hasArticles ? `+${formatNumber(k.today_views_growth)}` : "—", "Daily delta"),
+        analyticsMetric("互动增长", hasArticles ? `+${formatNumber(k.interaction_growth)}` : "—", "赞评藏转"),
+        analyticsMetric("精确引用率", hasChecks ? `${formatNumber(k.exact_citation_rate)}%` : "—", "Exact URL citations"),
+        analyticsMetric("GEO 平均分", hasChecks ? formatNumber(k.geo_average_score) : "—", "0 - 100"),
+        analyticsMetric("待处理异常", formatNumber(k.open_alerts), "Monitoring alerts", Number(k.open_alerts || 0) > 0)
+      ].join("");
+      const module = dashboardData?.modules.find(item => item.id === currentModule);
+      document.getElementById("analytics-scope").textContent = module ? `${module.name} · 分析视图` : "全站传播与 GEO 分析";
+      document.getElementById("analytics-updated").textContent = `数据更新于 ${String(dashboardData?.generated_at || "").replace("T", " ") || "—"}`;
+      const platforms = layer?.platform_summary || {};
+      const names = {zhihu:"知乎",csdn:"CSDN",sohu:"搜狐号"};
+      const activityValues = ["zhihu","csdn","sohu"].map(id => { const p=platforms[id] || {}; return Number(p.views || 0) + Number(p.likes || 0) + Number(p.comments || 0) + Number(p.favorites || 0) + Number(p.shares || 0); });
+      const maxActivity = Math.max(...activityValues, 1);
+      document.getElementById("platform-analytics").innerHTML = `<div class="platform-cards">${["zhihu","csdn","sohu"].map((platform,index) => {
+        const p=platforms[platform] || {}; const registered=Number(p.articles || 0); const available=registered > 0; const width=available ? Math.max(4,Math.round(activityValues[index] / maxActivity * 100)) : 0;
+        const value = metric => available ? formatNumber(p[metric]) : "—";
+        return `<article class="platform-card ${platform}"><div class="platform-identity"><span class="platform-icon">${platform === "zhihu" ? "知" : platform === "csdn" ? "C" : "搜"}</span><div><strong>${names[platform]}</strong><small>${available ? `${registered} 篇已登记` : "暂未采集"}</small></div></div><div class="platform-primary"><span>阅读量</span><strong>${value("views")}</strong></div><div class="platform-stats"><div class="platform-stat"><span>点赞</span><strong>${value("likes")}</strong></div><div class="platform-stat"><span>评论</span><strong>${value("comments")}</strong></div><div class="platform-stat"><span>收藏</span><strong>${value("favorites")}</strong></div><div class="platform-stat"><span>分享</span><strong>${value("shares")}</strong></div><div class="activity-track" title="当前范围相对活跃度"><span class="activity-bar" style="width:${width}%"></span></div></div></article>`;
+      }).join("")}</div>`;
+      const latestProviders = latestBy(checks, item => item.provider);
+      const latestStages = latestBy(checks, item => `${item.provider}:${item.due_day}`);
+      const providers = ["yuanbao","kimi","deepseek","doubao"];
+      document.getElementById("geo-analytics").innerHTML = `<div class="llm-grid">${providers.map(provider => {
+        const latest=latestProviders[provider]; const score=Number(latest?.score || 0); const klass=latest ? scoreClass(score) : "";
+        const stages=[7,14,30].map(day => { const item=latestStages[`${provider}:${day}`]; return `<div class="stage-cell"><span>D+${day}</span><strong>${item ? `${item.score} 分` : "待检测"}</strong></div>`; }).join("");
+        return `<article class="llm-card"><div class="llm-head"><div><h4>${escapeHtml(providerLabel(provider))}</h4><small>${compactTime(latest?.checked_at)}</small></div><span class="score-ring ${klass}" style="--score:${latest ? Math.min(100,Math.max(0,score)) : 0}" data-score="${latest ? score : "—"}"></span></div><span class="geo-badge ${klass}">${escapeHtml(latest ? geoLabel(latest.match_type) : "尚未检测")}</span><div class="stage-grid">${stages}</div><div class="llm-actions"><button class="tiny-link" onclick="loginLLM('${provider}')">登录</button><button class="tiny-link" onclick="viewGeoEvidence('${escapeHtml(latest?.job_id || "")}')" ${latest?.job_id ? "" : "disabled"}>查看证据</button></div></article>`;
+      }).join("")}</div>`;
+      const alerts = layer?.alerts || [];
+      document.getElementById("alert-count").className = `status ${alerts.length ? "pending" : "success"}`;
+      document.getElementById("alert-count").textContent = `${alerts.length} 项`;
+      document.getElementById("monitor-alerts").innerHTML = alerts.length ? alerts.map(item => `<div class="alert-item"><strong>${escapeHtml(providerLabel(item.provider) || item.alert_type || "监测提醒")}</strong><div>${escapeHtml(item.message)}</div><small>${escapeHtml(item.created_at)}</small></div>`).join("") : `<div class="alert-empty"><span class="alert-empty-mark">✓</span><div><strong>当前运行正常</strong><span>没有登录失效或采集异常</span></div></div>`;
+      if (currentPage === "job-detail") renderSelectedJobAnalytics();
+    }
+
+    async function renderSelectedJobAnalytics() {
+      const root = document.getElementById("job-analytics");
+      const job = dashboardData?.job_layer.find(item => item.job_id === selectedJob);
+      const state = document.getElementById("job-monitor-status");
+      if (!job) { state.className="status pending"; state.textContent="待选择"; root.innerHTML = `<div class="empty">请先从任务中心选择一个 Job</div>`; return; }
+      const response = await fetch(`/api/analytics/articles/${encodeURIComponent(job.job_id)}`, {cache:"no-store"});
+      const details = response.ok ? await response.json() : {articles:[],engagement:[],geo_checks:[]};
+      const byPlatform = Object.fromEntries((details.articles || []).map(item => [item.platform,item]));
+      const names = {zhihu:"知乎",csdn:"CSDN",sohu:"搜狐号"};
+      const registered=(details.articles || []).filter(item => item.published_url).length;
+      state.className=`status ${registered ? "success" : "pending"}`; state.textContent=registered ? `${registered}/3 已登记` : "待补录";
+      const rows = ["zhihu","csdn","sohu"].map(platform => { const article=byPlatform[platform]; const saved=article?.published_url || job.published_urls?.[platform] || ""; const draftKey=`${job.job_id}:${platform}`; const value=urlDrafts[draftKey] ?? saved; return `<div class="url-row"><div class="url-platform"><i>${platform === "zhihu" ? "知" : platform === "csdn" ? "C" : "搜"}</i>${names[platform]}</div><input id="url-${platform}" value="${escapeHtml(value)}" oninput="urlDrafts['${draftKey}']=this.value" placeholder="粘贴发布后的公开文章 URL"><span class="url-state ${saved ? "saved" : ""}">${saved ? "已登记" : "待补录"}</span><button class="button light save-url" onclick="savePublishedUrl('${platform}')" title="保存 ${names[platform]} 链接">✓</button></div>`; }).join("");
+      const evidenceItems=(details.geo_checks || []).slice(0,6);
+      const evidence = evidenceItems.map(item => `<div class="evidence-item"><strong>${escapeHtml(providerLabel(item.provider))} · ${geoLabel(item.match_type)} · ${item.score} 分 · D+${item.due_day}</strong><p>${escapeHtml((item.answer_text || item.error || "暂无回答").slice(0,180))}</p></div>`).join("");
+      root.innerHTML = `<div class="job-monitor-head"><strong>${escapeHtml(job.topic?.title || job.job_id)}</strong><span>${escapeHtml(job.module_name)} · ${escapeHtml(job.job_id)}</span></div><div class="url-registry">${rows}</div><div class="monitor-footer"><small>${registered ? "公开链接已登记，可执行对应监测。" : "至少登记一个公开链接后再执行监测。"}</small><div class="analytics-actions"><button id="monitor-engagement-job" class="button light" data-registered="${registered ? "true" : "false"}" onclick="runMonitor('engagement', true)" ${registered ? "" : "disabled"}>↻ 刷新此 Job 热度</button><button id="monitor-geo-job" class="button light" data-registered="${registered ? "true" : "false"}" onclick="runMonitor('geo', true)" ${registered ? "" : "disabled"}>执行此 Job GEO</button></div></div>${evidence ? `<h4 class="evidence-title">检测证据</h4><div class="evidence-list">${evidence}</div>` : ""}`;
+    }
+
+    async function savePublishedUrl(platform) {
+      const job = dashboardData?.job_layer.find(item => item.job_id === selectedJob); if (!job) return;
+      const publishedUrl = document.getElementById(`url-${platform}`).value.trim();
+      const response = await fetch(`/api/jobs/${job.job_id}/published-url`, {method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({platform,published_url:publishedUrl,title:job.topic?.title || job.job_id})});
+      const result = await response.json(); if (!response.ok) return alert(result.error || "链接保存失败"); delete urlDrafts[`${job.job_id}:${platform}`]; await loadDashboard();
+    }
+
+    async function runMonitor(type, selectedOnly=false) {
+      const job = dashboardData?.job_layer.find(item => item.job_id === selectedJob);
+      if (selectedOnly && !job) return alert("请先选择一个 Job");
+      monitorRunning[type]=true; updateMonitorButtons();
+      try { const response = await fetch(`/api/monitor/${type}`, {method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({job_id:selectedOnly ? job.job_id : ""})}); const result = await response.json(); if (!response.ok) return alert(result.error || "监测启动失败"); await loadDashboard(); }
+      finally { monitorRunning[type]=false; updateMonitorButtons(); }
+    }
+    function updateMonitorButtons() { ["all","job"].forEach(scope => { const engagement=document.getElementById(`monitor-engagement-${scope}`); const geo=document.getElementById(`monitor-geo-${scope}`); const blocked=scope === "job" && engagement?.dataset.registered !== "true"; if (engagement) { engagement.disabled=monitorRunning.engagement || blocked; engagement.textContent=monitorRunning.engagement ? "正在刷新..." : scope === "all" ? "↻ 刷新全站热度" : "↻ 刷新此 Job 热度"; } if (geo) { geo.disabled=monitorRunning.geo || blocked; geo.textContent=monitorRunning.geo ? "正在检测..." : scope === "all" ? "执行 GEO 检测" : "执行此 Job GEO"; } }); }
+    function viewGeoEvidence(jobId) { if (!jobId) return alert("该检测记录暂无可查看的 Job。"); location.href=`/jobs/${encodeURIComponent(jobId)}#job-monitor`; }
+    async function loginLLM(provider) { const response = await fetch(`/api/llm/${provider}/login`, {method:"POST"}); const result = await response.json(); if (!response.ok) return alert(result.error || "登录窗口启动失败"); alert("登录窗口已打开。完成登录后关闭该浏览器窗口即可保存登录状态。"); }
+
+    function selectModule(moduleId) { if (currentPage === "job-detail") { location.href=`/jobs?module=${encodeURIComponent(moduleId)}`; return; } currentModule = moduleId; selectedJob = ""; const url = new URL(location.href); moduleId === "all" ? url.searchParams.delete("module") : url.searchParams.set("module", moduleId); history.replaceState({}, "", url); loadDashboard(); }
+    function selectJob(jobId) { location.href=`/jobs/${encodeURIComponent(jobId)}`; }
 
     async function startRun() { if (currentModule === "all") return alert("请先选择一个内容模块"); const response = await fetch(`/api/run/${currentModule}`, {method:"POST"}); const result = await response.json(); if (!response.ok) return alert(result.error || "启动失败"); await loadDashboard(); }
-    async function approveJob(jobId) { if (!confirm("确认文章中的合作身份、服务范围和事实表述符合公司资料吗？")) return; const response = await fetch(`/api/jobs/${jobId}/review`, {method:"POST"}); const result = await response.json(); if (!response.ok) return alert(result.error || "审核失败"); await loadDashboard(); }
     async function startPublish(platform) { const job = dashboardData?.job_layer.find(item => item.job_id === selectedJob); if (!job) return alert("请先选择一个已生成 Job"); const response = await fetch(`/api/publish/${job.module_id}/${platform}`, {method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({job_id:job.job_id})}); const result = await response.json(); if (!response.ok) return alert(result.error || "启动失败"); await loadDashboard(); }
 
     loadDashboard().catch(error => { document.getElementById("logs").textContent = `Dashboard 加载失败：${error.message}`; });

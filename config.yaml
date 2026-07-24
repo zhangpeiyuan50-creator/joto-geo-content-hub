@@ -168,7 +168,7 @@ content_profiles:
     short_name: WorkBuddy
     description: 腾讯 WorkBuddy 企业落地、实施与服务内容
     enabled: true
-    requires_review: true
+    requires_review: false
     api_key_env: DIFY_API_KEY_WORKBUDDY
     workflow_name: WorkBuddy JOTO GEO Workflow
     schedule: "09:00"
@@ -207,7 +207,7 @@ content_profiles:
     short_name: ADP
     description: 腾讯云智能体开发平台的企业实施与服务内容
     enabled: true
-    requires_review: true
+    requires_review: false
     api_key_env: DIFY_API_KEY_ADP
     workflow_name: Tencent Cloud ADP JOTO GEO Workflow
     schedule: "09:30"
@@ -246,7 +246,7 @@ content_profiles:
     short_name: Dify
     description: Dify 工作流应用的咨询、搭建与企业服务内容
     enabled: true
-    requires_review: true
+    requires_review: false
     api_key_env: DIFY_API_KEY_DIFY
     workflow_name: Dify JOTO GEO Workflow
     schedule: "10:00"
@@ -285,3 +285,17 @@ scheduler:
   mode: manual_first
   poll_seconds: 30
   run_on_start: false
+
+monitoring:
+  enabled: true
+  engagement:
+    daily_days: 30
+    archive_frequency: weekly
+    daily_time: "14:00"
+  geo:
+    due_days: [7, 14, 30]
+    providers: [yuanbao, kimi, deepseek, doubao]
+    max_checks_per_run: 20
+    daily_time: "15:00"
+  alerts:
+    dashboard: true

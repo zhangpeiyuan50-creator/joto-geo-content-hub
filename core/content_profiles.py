@@ -16,7 +16,7 @@ def list_content_profiles(config: dict[str, Any], enabled_only: bool = False) ->
         item.setdefault("name", module_id)
         item.setdefault("short_name", item["name"])
         item.setdefault("enabled", True)
-        item.setdefault("requires_review", module_id != DEFAULT_MODULE_ID)
+        item.setdefault("requires_review", False)
         item.setdefault("workflow_name", item["name"])
         if enabled_only and not item["enabled"]:
             continue

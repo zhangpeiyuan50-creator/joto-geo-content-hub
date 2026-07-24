@@ -7,7 +7,7 @@ JOTO GEO Content Hub 是一套在本机运行的多内容 GEO 工作台，统一
 - 腾讯云 ADP x JOTO
 - Dify x JOTO
 
-系统共享热点采集、Dify Workflow、Unsplash 配图、Job 管理、人工审核，以及知乎、CSDN、搜狐号发布辅助。项目使用 Python 3.10+，网站默认地址为 <http://127.0.0.1:8765/>。
+系统共享热点采集、Dify Workflow、Unsplash 配图、Job 管理，以及知乎、CSDN、搜狐号发布辅助。内容生成成功后即可进入发布辅助。项目使用 Python 3.10+，网站默认地址为 <http://127.0.0.1:8765/>。
 
 ## 重要安全说明
 
@@ -84,10 +84,10 @@ Windows 双击 `启动网站.bat`，macOS/Linux 运行 `bash start.sh`。在网�
 
 - 按模块手动生成内容
 - 查看任务、文章、封面和 metadata
-- 审核 WorkBuddy、ADP、Dify 的合作表述
+- 查看 WorkBuddy、ADP、Dify 的合作内容与发布状态
 - 选择指定 Job 发布到知乎、CSDN 或搜狐号
 
-合作模块必须先完成“确认合作表述”，才能启动发布辅助。最终发布按钮仍由人工确认。
+内容生成成功后即可启动发布辅助，最终发布按钮仍由人工确认。
 
 Windows 也可以双击 `发布知乎.bat`、`发布CSDN.bat` 或 `发布搜狐.bat`。命令行使用项目虚拟环境：
 
@@ -183,3 +183,33 @@ git push -u origin main
 - 端口 8765 被占用：先关闭旧的网站进程，再重新启动。
 
 统一运行日志位于 `data/logs/fasium_geo_auto.log`，发布日志位于 `data/logs/publisher.log`。这些日志仅保存在本机。
+
+## 传播与 GEO 监测
+
+Dashboard 的“传播与 GEO 分析”区域用于监测已发布文章。发布辅助会尝试自动识别发布后的公开 URL；如果平台没有自动跳转，请选择对应 Job，并在“所选 Job 监测”中粘贴知乎、CSDN、搜狐号的公开文章链接。
+
+热度监测包括平台页面能够公开读取的阅读、点赞、评论、收藏、分享或转发数据。平台未提供的指标显示为空，不会当作零。发布后前 30 天每天采集，之后每周采集。
+
+GEO 检测覆盖腾讯元宝、Kimi、DeepSeek、豆包。第一次使用前，在网页中分别点击四个“登录”按钮，完成登录后关闭自动化浏览器窗口。系统不会绕过验证码；登录失效时会在监测待办中提示。
+
+手动运行：
+
+```powershell
+.\.venv\Scripts\python.exe main.py monitor engagement
+.\.venv\Scripts\python.exe main.py monitor engagement --job-id JOB_ID
+.\.venv\Scripts\python.exe main.py monitor geo
+.\.venv\Scripts\python.exe main.py monitor geo --job-id JOB_ID
+```
+
+模型登录也可以从终端启动：
+
+```powershell
+.\.venv\Scripts\python.exe main.py llm-login yuanbao
+.\.venv\Scripts\python.exe main.py llm-login kimi
+.\.venv\Scripts\python.exe main.py llm-login deepseek
+.\.venv\Scripts\python.exe main.py llm-login doubao
+```
+
+监测数据保存在 `data/analytics.db`，模型登录状态保存在 `data/llm_profiles/`，GEO 证据截图保存在 `data/logs/geo_screenshots/`。这些内容均已被 `.gitignore` 排除。
+
+`config.yaml` 中 `monitoring.enabled: true` 表示守护进程会执行监测任务；它不等同于 `scheduler.enabled`。因此可以保持内容自动生成关闭，同时让已发布文章继续按计划监测。

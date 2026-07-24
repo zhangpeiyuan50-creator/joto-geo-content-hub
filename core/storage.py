@@ -7,6 +7,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+from core.content_sanitizer import sanitize_sohu_content
+
 
 def save_topic_result(
     output_dir: Path,
@@ -28,7 +30,9 @@ def save_topic_result(
 
     zhihu_content = extract_platform_content(result.get("zhihu", ""), "zhihu")
     csdn_content = extract_platform_content(result.get("csdn", ""), "csdn")
-    sohu_content = extract_platform_content(result.get("sohu", ""), "sohu")
+    sohu_content = sanitize_sohu_content(
+        extract_platform_content(result.get("sohu", ""), "sohu")
+    )
     cover_prompt = extract_platform_content(result.get("cover_prompt", ""), "cover_prompt")
 
     files = {
@@ -58,7 +62,7 @@ def save_topic_result(
         "module_id": module.get("id", "fasium"),
         "module_name": module.get("name", "FasiumAI"),
         "workflow_name": module.get("workflow_name", ""),
-        "review_status": "pending" if module.get("requires_review", False) else "not_required",
+        "review_status": "not_required",
         "partnership_claims": config.get("content", {}).get("approved_claims", []),
         "publish_status": {"zhihu": "idle", "csdn": "idle", "sohu": "idle"},
         "package_layout": "content_package_v2",

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from core.content_sanitizer import sanitize_sohu_content
 from core.publishers.base import BrowserPublisher
 
 
@@ -9,6 +10,13 @@ class SohuPublisher(BrowserPublisher):
     platform = "sohu"
     editor_url = "https://mp.sohu.com/mpfe/v3/main/news/add"
     content_file = "sohu/sohu_rich.html"
+
+    def read_package(self) -> dict:
+        package = super().read_package()
+        package["title"] = sanitize_sohu_content(package["title"])
+        package["content"] = sanitize_sohu_content(package["content"])
+        package["raw_content"] = sanitize_sohu_content(package["raw_content"])
+        return package
 
     def open_editor(self) -> None:
         assert self.page is not None

@@ -20,7 +20,7 @@ def create_job(
         "module_id": module.get("id", "fasium"),
         "module_name": module.get("name", "FasiumAI"),
         "workflow_name": module.get("workflow_name", ""),
-        "review_status": "pending" if module.get("requires_review", False) else "not_required",
+        "review_status": "not_required",
         "partnership_claims": [],
         "publish_status": {"zhihu": "idle", "csdn": "idle", "sohu": "idle"},
         "outputs": {},

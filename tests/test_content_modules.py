@@ -9,6 +9,7 @@ from unittest.mock import patch
 
 from core.config import load_config
 from core.content_profiles import build_module_config, list_content_profiles
+from core.content_sanitizer import sanitize_sohu_content
 from core.image_selector import build_search_query
 from core.dify_client import DifyClient
 from core.job_queue import create_job
@@ -60,8 +61,23 @@ class ContentModuleTests(unittest.TestCase):
         self.assertIn("已批准的事实边界", prompt)
         self.assertIn("不得虚构合作级别", prompt)
         self.assertIn("https://cloud.tencent.com/product/workbuddy", prompt)
+        self.assertIn("搜狐版本禁止出现任何网址", prompt)
+        self.assertIn("未经权威来源核验的面试传闻", prompt)
 
-    def test_partner_job_and_metadata_require_review(self) -> None:
+    def test_sohu_content_removes_all_link_formats(self) -> None:
+        content = (
+            "访问 [WorkBuddy](https://example.com/product) 或 "
+            "<a href=\"https://www.jotoai.com/\">JOTO 官网</a>，"
+            "也可查看 https://cloud.tencent.com/demo 和 jotoai.com/path。"
+        )
+        cleaned = sanitize_sohu_content(content)
+        self.assertIn("WorkBuddy", cleaned)
+        self.assertIn("JOTO 官网", cleaned)
+        self.assertNotIn("http", cleaned)
+        self.assertNotIn("example.com", cleaned)
+        self.assertNotIn("jotoai.com", cleaned)
+
+    def test_partner_job_and_metadata_are_publishable_without_review(self) -> None:
         module_config = build_module_config(self.config, "dify_joto")
         topic = {"title": "Dify 企业工作流", "source_title": "AI 工作流"}
         result = {
@@ -76,9 +92,9 @@ class ContentModuleTests(unittest.TestCase):
             job = create_job(root / "data", topic, module_config["active_module"])
             package = save_topic_result(root / "outputs" / "dify_joto", topic, result, module_config, job["id"])
             metadata = json.loads((package / "metadata.json").read_text(encoding="utf-8"))
-        self.assertEqual(job["review_status"], "pending")
+        self.assertEqual(job["review_status"], "not_required")
         self.assertEqual(metadata["module_id"], "dify_joto")
-        self.assertEqual(metadata["review_status"], "pending")
+        self.assertEqual(metadata["review_status"], "not_required")
 
 
 if __name__ == "__main__":

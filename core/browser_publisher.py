@@ -1,12 +1,13 @@
 from __future__ import annotations
 
 import logging
-import json
 from pathlib import Path
 from typing import Any
 
 from core.content_profiles import DEFAULT_MODULE_ID, build_module_config
 from core.job_queue import load_job, save_job
+from core.analytics_store import AnalyticsStore
+from core.engagement_monitor import analytics_path
 from core.publishers import CSDNPublisher, SohuPublisher, ZhihuPublisher
 from core.publishers.base import extract_article_html, html_to_text, looks_like_html
 
@@ -62,33 +63,18 @@ PLATFORM_CONTENT_FILES = {
 }
 
 
-def package_is_reviewed(package: Path, requires_review: bool) -> bool:
-    if not requires_review:
-        return True
-    metadata_path = package / "metadata.json"
-    if not metadata_path.exists():
-        return False
-    try:
-        metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError):
-        return False
-    return metadata.get("review_status") == "approved"
-
-
-def latest_content_package(output_dir: Path, platform: str, requires_review: bool = False) -> Path:
+def latest_content_package(output_dir: Path, platform: str) -> Path:
     if not output_dir.exists():
         raise FileNotFoundError(f"outputs directory not found: {output_dir}")
     packages = [path for path in output_dir.iterdir() if path.is_dir()]
     packages.sort(key=lambda path: path.stat().st_mtime, reverse=True)
     for package in packages:
-        if not package_is_reviewed(package, requires_review):
-            continue
         for relative_path in PLATFORM_CONTENT_FILES[platform]:
             content_path = package / relative_path
             if content_path.is_file() and is_publishable_content(content_path):
                 return package
     raise FileNotFoundError(
-        f"没有找到可发布的 {platform} Content Package。请确认正文有效，合作内容还需要先通过人工审核"
+        f"没有找到可发布的 {platform} Content Package。请确认正文文件存在且内容有效"
     )
 
 
@@ -120,8 +106,6 @@ def resolve_package(
             raise FileNotFoundError(f"job not found: {job_id}")
         if job.get("module_id", DEFAULT_MODULE_ID) != module_id:
             raise ValueError(f"job {job_id} does not belong to module {module_id}")
-        if module.get("requires_review") and job.get("review_status") != "approved":
-            raise PermissionError("合作内容尚未通过人工审核，不能启动发布辅助")
         package = Path(str(job.get("output_dir", "")))
         if not package.exists():
             raise FileNotFoundError(f"job output directory not found: {package}")
@@ -137,9 +121,9 @@ def resolve_package(
 
     module_root = output_root / module_id
     if module_root.exists():
-        return latest_content_package(module_root, platform, bool(module.get("requires_review"))), None
+        return latest_content_package(module_root, platform), None
     if module_id == DEFAULT_MODULE_ID:
-        return latest_content_package(output_root, platform, False), None
+        return latest_content_package(output_root, platform), None
     raise FileNotFoundError(f"module output directory not found: {module_root}")
 
 
@@ -170,8 +154,32 @@ def publish_interactive(
     try:
         publisher.run()
         if job:
-            job.setdefault("publish_status", {})[selected_platform] = "ready"
-            save_job(project_root / config.get("project", {}).get("data_dir", "data"), job)
+            data_dir = project_root / config.get("project", {}).get("data_dir", "data")
+            analytics = AnalyticsStore(analytics_path(project_root, config))
+            detected_url = str(getattr(publisher, "published_url", "") or "")
+            if detected_url:
+                package = getattr(publisher, "current_package", {}) or {}
+                analytics.register_article(
+                    job_id=job["id"],
+                    module_id=job.get("module_id", module_id),
+                    platform=selected_platform,
+                    title=str(package.get("title") or job.get("topic", {}).get("title") or job["id"]),
+                    published_url=detected_url,
+                    capture_method="playwright",
+                )
+                job.setdefault("published_urls", {})[selected_platform] = detected_url
+                job.setdefault("publish_status", {})[selected_platform] = "published"
+                logger.info("published URL saved platform=%s url=%s", selected_platform, detected_url)
+            else:
+                job.setdefault("publish_status", {})[selected_platform] = "ready"
+                analytics.add_alert(
+                    "published_url_missing",
+                    f"{selected_platform} 发布后尚未捕获最终文章 URL，请在任务详情中补录。",
+                    job_id=job["id"],
+                    provider=selected_platform,
+                    dedupe_key=f"published-url:{job['id']}:{selected_platform}",
+                )
+            save_job(data_dir, job)
         logger.info("browser publisher finished platform=%s package=%s", selected_platform, package_dir)
         return 0
     except Exception as exc:

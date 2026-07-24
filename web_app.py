@@ -18,7 +18,17 @@ from urllib.parse import parse_qs, quote, unquote, urlparse
 from core.config import load_config
 from core.content_profiles import DEFAULT_MODULE_ID, get_content_profile, list_content_profiles
 from core.job_queue import load_job, load_recent_jobs, save_job
-from main import PROJECT_ROOT, load_app_config, run_once, setup_logging
+from core.analytics_store import AnalyticsStore
+from core.engagement_monitor import analytics_path
+from core.geo_monitor import login_provider
+from main import (
+    PROJECT_ROOT,
+    load_app_config,
+    run_engagement_monitor,
+    run_geo_monitor,
+    run_once,
+    setup_logging,
+)
 
 
 HOST = "127.0.0.1"
@@ -72,6 +82,10 @@ publish_state = {
     }
     for platform in PUBLISH_PLATFORMS
 }
+monitor_state = {
+    "engagement": {"running": False, "message": "等待执行", "result": {}},
+    "geo": {"running": False, "message": "等待执行", "result": {}},
+}
 
 
 def get_config() -> dict:
@@ -86,6 +100,11 @@ def get_data_dir() -> Path:
 def get_output_dir() -> Path:
     config = get_config()
     return PROJECT_ROOT / config.get("project", {}).get("output_dir", "outputs")
+
+
+def get_analytics_store() -> AnalyticsStore:
+    config = get_config()
+    return AnalyticsStore(analytics_path(PROJECT_ROOT, config))
 
 
 def read_json(path: Path) -> dict:
@@ -195,6 +214,28 @@ def run_publisher(module_id: str, platform: str, job_id: str) -> None:
             )
 
 
+def run_monitor_task(monitor_type: str, job_id: str | None = None) -> None:
+    with state_lock:
+        monitor_state[monitor_type].update(running=True, message="正在执行", result={})
+    try:
+        config = load_app_config()
+        result = (
+            run_engagement_monitor(config, job_id=job_id, force=bool(job_id))
+            if monitor_type == "engagement"
+            else run_geo_monitor(config, job_id=job_id, force=bool(job_id))
+        )
+        message = f"完成：成功 {result['succeeded']}，失败 {result['failed']}"
+        append_log(f"[MONITOR] type={monitor_type} job={job_id or 'due'} result={result}")
+    except Exception as exc:
+        result = {"processed": 0, "succeeded": 0, "failed": 1}
+        message = f"执行失败：{exc}"
+        append_log(f"[ERROR] monitor type={monitor_type} failed: {exc}")
+        append_log(traceback.format_exc())
+    finally:
+        with state_lock:
+            monitor_state[monitor_type].update(running=False, message=message, result=result)
+
+
 def normalize_status(status: str) -> str:
     if status == "generated":
         return "success"
@@ -252,8 +293,9 @@ def enrich_job(job: dict) -> dict:
         "workflow_name": job.get("workflow_name", ""),
         "status": normalize_status(str(job.get("status", ""))),
         "raw_status": job.get("status", ""),
-        "review_status": job.get("review_status", "not_required"),
+        "review_status": "not_required",
         "publish_status": job.get("publish_status", {}),
+        "published_urls": job.get("published_urls", {}),
         "created_time": job.get("created_at", ""),
         "duration": duration,
         "duration_label": format_duration(duration),
@@ -279,7 +321,11 @@ def calculate_kpis(jobs: list[dict]) -> dict:
         bool(job.get("output_dir")) and (Path(str(job["output_dir"])) / "assets" / "cover_image.jpg").exists()
         for job in generated
     )
-    pending_review = sum(job.get("review_status") == "pending" for job in jobs)
+    ready_to_publish = sum(
+        normalize_status(str(job.get("status", ""))) == "success"
+        and any(job.get("publish_status", {}).get(platform) != "published" for platform in PUBLISH_PLATFORMS)
+        for job in jobs
+    )
     return {
         "today_jobs": total,
         "success": success,
@@ -290,7 +336,7 @@ def calculate_kpis(jobs: list[dict]) -> dict:
         "avg_duration_label": format_duration(avg_duration),
         "image_success_rate": round(image_success / len(generated) * 100) if generated else 0,
         "dify_success_rate": round(success / (success + failed) * 100) if success + failed else 0,
-        "pending_review": pending_review,
+        "ready_to_publish": ready_to_publish,
     }
 
 
@@ -405,7 +451,7 @@ def group_output_package(folder: Path) -> dict:
         "module_name": metadata.get("module_name", "FasiumAI"),
         "title": metadata.get("topic", {}).get("title") or folder.name,
         "created_at": metadata.get("generated_at") or datetime.fromtimestamp(folder.stat().st_mtime).isoformat(timespec="seconds"),
-        "review_status": metadata.get("review_status", "not_required"),
+        "review_status": "not_required",
         "content_layer": {
             "article": {
                 "zhihu": asset_payload(folder_key, zhihu, files),
@@ -433,6 +479,12 @@ def list_output_packages(module_id: str = "all", limit: int = 12) -> list[dict]:
     folders = [path.parent for path in output_root.glob("**/metadata.json")]
     folders.sort(key=lambda path: path.stat().st_mtime, reverse=True)
     packages = [group_output_package(folder) for folder in folders]
+    packages = [
+        package
+        for package in packages
+        if (job := load_job(get_data_dir(), str(package.get("job_id", "")))) is None
+        or job.get("status") != "failed"
+    ]
     if module_id != "all":
         packages = [package for package in packages if package["module_id"] == module_id]
     return packages[:limit]
@@ -498,11 +550,11 @@ def module_summaries(config: dict, jobs: list[dict]) -> list[dict]:
                 "description": profile.get("description", ""),
                 "color": profile.get("color", "blue"),
                 "enabled": profile.get("enabled", True),
-                "requires_review": profile.get("requires_review", False),
+                "requires_review": False,
                 "schedule": profile.get("schedule", "-"),
                 "today_jobs": len(today_jobs),
                 "success": sum(normalize_status(str(job.get("status", ""))) == "success" for job in today_jobs),
-                "pending_review": sum(job.get("review_status") == "pending" for job in module_jobs),
+                "pending_review": 0,
                 "latest_job": module_jobs[0].get("id", "") if module_jobs else "",
             }
         )
@@ -517,6 +569,7 @@ def dashboard_payload(module_id: str = "all") -> dict:
     all_jobs = load_jobs(data_dir, "all")
     selected_jobs = all_jobs if module_id == "all" else [job for job in all_jobs if module_for_job(job) == module_id]
     outputs = list_output_packages(module_id, limit=12)
+    analytics = get_analytics_store().dashboard_summary(module_id)
     return {
         "generated_at": datetime.now().isoformat(timespec="seconds"),
         "selected_module": module_id,
@@ -530,6 +583,7 @@ def dashboard_payload(module_id: str = "all") -> dict:
             platform: {**PUBLISH_PLATFORMS[platform], **dict(state)}
             for platform, state in publish_state.items()
         },
+        "analytics_layer": {**analytics, "monitor_state": monitor_state},
         "system_layer": {
             "scheduler": scheduler_snapshot(data_dir),
             "logs": {
@@ -540,26 +594,17 @@ def dashboard_payload(module_id: str = "all") -> dict:
     }
 
 
-def approve_job(job_id: str) -> dict:
-    data_dir = get_data_dir()
-    job = load_job(data_dir, job_id)
+def job_detail_payload(job_id: str) -> dict:
+    job = load_job(get_data_dir(), job_id)
     if not job:
         raise FileNotFoundError(f"job not found: {job_id}")
-    if job.get("status") != "generated":
-        raise ValueError("only generated jobs can be approved")
-    output_dir = str(job.get("output_dir") or "").strip()
-    if not output_dir or not Path(output_dir).is_dir():
-        raise FileNotFoundError("job output directory not found")
-    job["review_status"] = "approved"
-    job["reviewed_at"] = datetime.now().isoformat(timespec="seconds")
-    save_job(data_dir, job)
-    metadata_path = Path(output_dir) / "metadata.json"
-    metadata = read_json(metadata_path)
-    if metadata_path.parent.exists():
-        metadata["review_status"] = "approved"
-        metadata["reviewed_at"] = job["reviewed_at"]
-        metadata_path.write_text(json.dumps(metadata, ensure_ascii=False, indent=2), encoding="utf-8")
-    return job
+    output_dir = Path(str(job.get("output_dir") or ""))
+    package = group_output_package(output_dir) if output_dir.is_dir() else None
+    return {
+        "job": enrich_job(job),
+        "content_package": package,
+        "analytics": get_analytics_store().analytics_for_job(job_id),
+    }
 
 
 def render_index() -> str:
@@ -584,7 +629,10 @@ class Handler(BaseHTTPRequestHandler):
     def do_GET(self) -> None:
         parsed = urlparse(self.path)
         params = parse_qs(parsed.query)
-        if parsed.path == "/":
+        if parsed.path in {"/", "/jobs", "/analytics", "/publish", "/system"}:
+            self.send_html(render_index())
+            return
+        if parsed.path.startswith("/jobs/") and len(parsed.path.split("/")) == 3:
             self.send_html(render_index())
             return
         if parsed.path == "/api/dashboard":
@@ -593,6 +641,21 @@ class Handler(BaseHTTPRequestHandler):
                 self.send_json(dashboard_payload(module_id))
             except ValueError as exc:
                 self.send_json({"error": str(exc)}, HTTPStatus.BAD_REQUEST)
+            return
+        if parsed.path == "/api/analytics/summary":
+            module_id = params.get("module", ["all"])[0]
+            self.send_json(get_analytics_store().dashboard_summary(module_id))
+            return
+        if parsed.path.startswith("/api/analytics/articles/"):
+            job_id = unquote(parsed.path.rsplit("/", 1)[-1])
+            self.send_json(get_analytics_store().analytics_for_job(job_id))
+            return
+        if parsed.path.startswith("/api/jobs/") and len(parsed.path.split("/")) == 4:
+            job_id = unquote(parsed.path.rsplit("/", 1)[-1])
+            try:
+                self.send_json(job_detail_payload(job_id))
+            except FileNotFoundError as exc:
+                self.send_json({"error": str(exc)}, HTTPStatus.NOT_FOUND)
             return
         if parsed.path == "/status":
             self.send_json(dict(run_state))
@@ -652,9 +715,6 @@ class Handler(BaseHTTPRequestHandler):
             if not job or module_for_job(job) != module_id:
                 self.send_json({"error": "没有找到该模块的 Job"}, HTTPStatus.NOT_FOUND)
                 return
-            if job.get("review_status") == "pending":
-                self.send_json({"error": "合作内容尚未通过人工审核"}, HTTPStatus.FORBIDDEN)
-                return
             with state_lock:
                 if publish_state[platform]["running"]:
                     self.send_json({"error": "该平台的发布辅助正在运行"}, HTTPStatus.CONFLICT)
@@ -663,14 +723,52 @@ class Handler(BaseHTTPRequestHandler):
             self.send_json({"ok": True, "module_id": module_id, "platform": platform, "job_id": job_id}, HTTPStatus.ACCEPTED)
             return
 
-        if len(parts) == 4 and parts[:2] == ["api", "jobs"] and parts[3] == "review":
+        if len(parts) == 4 and parts[:2] == ["api", "jobs"] and parts[3] == "published-url":
+            job_id = parts[2]
+            payload = self.read_json_body()
+            platform = str(payload.get("platform", "")).strip().lower()
+            published_url = str(payload.get("published_url", "")).strip()
+            job = load_job(get_data_dir(), job_id)
+            if not job:
+                self.send_json({"error": "没有找到该 Job"}, HTTPStatus.NOT_FOUND)
+                return
             try:
-                job = approve_job(parts[2])
-                self.send_json({"ok": True, "job": enrich_job(job)})
-            except FileNotFoundError as exc:
-                self.send_json({"error": str(exc)}, HTTPStatus.NOT_FOUND)
+                article = get_analytics_store().register_article(
+                    job_id=job_id,
+                    module_id=module_for_job(job),
+                    platform=platform,
+                    title=str(payload.get("title") or job.get("topic", {}).get("title") or job_id),
+                    published_url=published_url,
+                    published_at=str(payload.get("published_at") or "") or None,
+                    capture_method="manual",
+                )
+                job.setdefault("published_urls", {})[platform] = article["published_url"]
+                job.setdefault("publish_status", {})[platform] = "published"
+                save_job(get_data_dir(), job)
+                self.send_json({"ok": True, "article": article})
             except ValueError as exc:
                 self.send_json({"error": str(exc)}, HTTPStatus.BAD_REQUEST)
+            return
+
+        if len(parts) == 3 and parts[:2] == ["api", "monitor"] and parts[2] in {"engagement", "geo"}:
+            monitor_type = parts[2]
+            payload = self.read_json_body()
+            job_id = str(payload.get("job_id", "")).strip() or None
+            with state_lock:
+                if monitor_state[monitor_type]["running"]:
+                    self.send_json({"error": "该监测任务正在执行"}, HTTPStatus.CONFLICT)
+                    return
+            threading.Thread(target=run_monitor_task, args=(monitor_type, job_id), daemon=True).start()
+            self.send_json({"ok": True, "monitor_type": monitor_type, "job_id": job_id}, HTTPStatus.ACCEPTED)
+            return
+
+        if len(parts) == 4 and parts[:2] == ["api", "llm"] and parts[3] == "login":
+            provider = parts[2]
+            if provider not in {"yuanbao", "kimi", "deepseek", "doubao"}:
+                self.send_json({"error": "不支持的模型"}, HTTPStatus.BAD_REQUEST)
+                return
+            threading.Thread(target=login_provider, args=(PROJECT_ROOT, provider), daemon=True).start()
+            self.send_json({"ok": True, "provider": provider}, HTTPStatus.ACCEPTED)
             return
 
         self.send_text("Not found", HTTPStatus.NOT_FOUND)

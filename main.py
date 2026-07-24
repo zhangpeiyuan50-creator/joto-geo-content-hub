@@ -20,6 +20,9 @@ from core.crawler import collect_hot_items
 from core.publisher import publish_all
 from core.scheduler import run_multi_scheduler, write_scheduler_state
 from core.topic_generator import run_topic_job, select_generation_topics
+from core.analytics_store import AnalyticsStore
+from core.engagement_monitor import EngagementMonitor, analytics_path
+from core.geo_monitor import GeoMonitor, login_provider
 
 
 PROJECT_ROOT = Path(__file__).resolve().parent
@@ -205,21 +208,59 @@ def run_schedule_forever(config: dict[str, Any]) -> None:
     data_dir, _ = get_paths(config)
     scheduler_config = config.get("scheduler", {})
     poll_seconds = int(scheduler_config.get("poll_seconds", 30))
-    enabled = bool(scheduler_config.get("enabled", False))
-    tasks = {
-        profile["id"]: (
-            lambda module_id=profile["id"]: run_once(config, module_id),
-            str(profile.get("schedule", "08:30")),
+    generation_enabled = bool(scheduler_config.get("enabled", False))
+    tasks: dict[str, tuple[Callable[[], None], str]] = {}
+    if generation_enabled:
+        tasks.update({
+            profile["id"]: (
+                lambda module_id=profile["id"]: run_once(config, module_id),
+                str(profile.get("schedule", "08:30")),
+            )
+            for profile in list_content_profiles(config, enabled_only=True)
+        })
+    monitoring_config = config.get("monitoring", {})
+    monitoring_enabled = bool(monitoring_config.get("enabled", False))
+    if monitoring_enabled:
+        tasks["monitoring:engagement"] = (
+            lambda: run_engagement_monitor(config),
+            str(monitoring_config.get("engagement", {}).get("daily_time", "14:00")),
         )
-        for profile in list_content_profiles(config, enabled_only=True)
-    }
-    logger.info("[SCHEDULER] current mode: multi-module schedule enabled=%s", enabled)
+        tasks["monitoring:geo"] = (
+            lambda: run_geo_monitor(config),
+            str(monitoring_config.get("geo", {}).get("daily_time", "15:00")),
+        )
+    enabled = bool(tasks)
+    logger.info(
+        "[SCHEDULER] current mode: multi-module generation_enabled=%s monitoring_enabled=%s",
+        generation_enabled,
+        monitoring_enabled,
+    )
     run_multi_scheduler(
         tasks,
         poll_seconds=poll_seconds,
         state_path=data_dir / "scheduler_state.json",
         enabled=enabled,
     )
+
+
+def analytics_store(config: dict[str, Any]) -> AnalyticsStore:
+    return AnalyticsStore(analytics_path(PROJECT_ROOT, config))
+
+
+def run_engagement_monitor(
+    config: dict[str, Any], job_id: str | None = None, force: bool = False
+) -> dict[str, int]:
+    result = EngagementMonitor(analytics_store(config), config).run(job_id=job_id, force=force)
+    logging.getLogger(__name__).info("engagement monitor finished result=%s", result)
+    return result
+
+
+def run_geo_monitor(
+    config: dict[str, Any], job_id: str | None = None, force: bool = False
+) -> dict[str, int]:
+    result = GeoMonitor(PROJECT_ROOT, analytics_store(config), config).run(job_id=job_id, force=force)
+    logging.getLogger(__name__).info("geo monitor finished result=%s", result)
+    return result
 
 
 def supervise_scheduler(config: dict[str, Any]) -> int:
@@ -388,19 +429,19 @@ def main() -> int:
     parser.add_argument(
         "command",
         nargs="?",
-        choices=["run-once", "schedule", "supervise", "start", "stop", "status", "publish"],
+        choices=["run-once", "schedule", "supervise", "start", "stop", "status", "publish", "monitor", "llm-login"],
         default="run-once",
         help="run once, run scheduler, or manage daemon",
     )
     parser.add_argument(
         "legacy_platform",
         nargs="?",
-        choices=["zhihu", "csdn", "sohu"],
-        help="optional platform for the publish command",
+        choices=["zhihu", "csdn", "sohu", "engagement", "geo", "yuanbao", "kimi", "deepseek", "doubao"],
+        help="optional platform, monitor type, or LLM provider",
     )
     parser.add_argument("--module", default=DEFAULT_MODULE_ID, help="content module id or all")
     parser.add_argument("--platform", dest="named_platform", choices=["zhihu", "csdn", "sohu"])
-    parser.add_argument("--job", dest="job_id", help="exact job id to publish")
+    parser.add_argument("--job", "--job-id", dest="job_id", help="exact job id")
     args = parser.parse_args()
 
     log_path = setup_logging(PROJECT_ROOT)
@@ -422,6 +463,23 @@ def main() -> int:
             module_id=args.module,
             job_id=args.job_id,
         )
+    if args.command == "monitor":
+        monitor_type = args.legacy_platform
+        if monitor_type not in {"engagement", "geo"}:
+            parser.error("monitor command requires engagement or geo")
+        result = (
+            run_engagement_monitor(config, args.job_id, force=bool(args.job_id))
+            if monitor_type == "engagement"
+            else run_geo_monitor(config, args.job_id, force=bool(args.job_id))
+        )
+        print(result)
+        return 0 if result.get("failed", 0) == 0 else 1
+    if args.command == "llm-login":
+        provider = args.legacy_platform
+        if provider not in {"yuanbao", "kimi", "deepseek", "doubao"}:
+            parser.error("llm-login requires yuanbao, kimi, deepseek, or doubao")
+        login_provider(PROJECT_ROOT, provider)
+        return 0
     if args.command == "supervise":
         return supervise_scheduler(config)
     if args.command == "schedule":

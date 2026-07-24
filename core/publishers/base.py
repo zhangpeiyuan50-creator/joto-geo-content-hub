@@ -21,6 +21,7 @@ class BrowserPublisher:
         self.browser = None
         self.context = None
         self.page = None
+        self.published_url = ""
 
     def run(self) -> None:
         package = self.read_package()
@@ -36,7 +37,7 @@ class BrowserPublisher:
         print("内容已经填写完成，浏览器会停留在发布页面。请检查后由你手动点击发布。")
         if self.web_publish_mode:
             print("网页发布模式：完成检查后直接关闭自动化浏览器窗口即可。")
-            self.wait_until_browser_closed()
+            self.published_url = self.wait_until_browser_closed()
         else:
             input("检查完成后按 Enter 关闭自动化浏览器；需要继续编辑时先不要按 Enter：")
 
@@ -44,16 +45,35 @@ class BrowserPublisher:
     def web_publish_mode(self) -> bool:
         return os.getenv("FASIUM_WEB_PUBLISH") == "1"
 
-    def wait_until_browser_closed(self, timeout_seconds: int = 7200) -> None:
+    def wait_until_browser_closed(self, timeout_seconds: int = 7200) -> str:
         deadline = time.monotonic() + timeout_seconds
+        detected_url = ""
         while time.monotonic() < deadline:
             try:
                 if not self.context or not self.context.pages:
-                    return
-                self.page.wait_for_timeout(1000)
+                    return detected_url
+                for candidate_page in self.context.pages:
+                    candidate = self._public_article_url(candidate_page.url)
+                    if candidate:
+                        detected_url = candidate
+                        self.logger.info(
+                            "published article URL detected platform=%s url=%s",
+                            self.platform,
+                            detected_url,
+                        )
+                self.context.pages[0].wait_for_timeout(1000)
             except Exception:
-                return
+                return detected_url
         self.logger.warning("publisher browser wait timed out platform=%s", self.platform)
+        return detected_url
+
+    def _public_article_url(self, value: str) -> str:
+        try:
+            from core.analytics_store import validate_platform_url
+
+            return validate_platform_url(self.platform, value)
+        except (ValueError, KeyError):
+            return ""
 
     def read_package(self) -> dict[str, Any]:
         content_path = self.resolve_content_path()

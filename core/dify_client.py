@@ -123,10 +123,18 @@ class DifyClient:
         if final_payload:
             return self._normalize_response(final_payload)
 
+        if not streamed_text:
+            raise RuntimeError("Dify workflow ended without a final result or text output")
         return self._normalize_response({"outputs": {"text": "".join(streamed_text)}})
 
     def _normalize_response(self, payload: dict[str, Any]) -> dict[str, Any]:
-        outputs = payload.get("data", {}).get("outputs")
+        data = payload.get("data", {})
+        status = str(data.get("status") or payload.get("status") or "").lower()
+        if status in {"failed", "stopped", "cancelled", "canceled"}:
+            error = data.get("error") or payload.get("error") or "unknown workflow error"
+            raise RuntimeError(f"Dify workflow {status}: {error}")
+
+        outputs = data.get("outputs")
         if outputs is None:
             outputs = payload.get("outputs", payload)
 

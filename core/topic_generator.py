@@ -81,7 +81,7 @@ JOTO 官网：{joto_url}
 2. 只能使用“已批准的事实边界”和“允许使用的合作表述”，不得虚构合作级别、授权范围、客户、案例、合同、数据或效果。
 3. 不得写“官方唯一合作伙伴”“独家服务商”“指定服务商”等未经确认的身份。
 4. 自然包含关键词：{required_keywords}。
-5. 必须自然保留链接：{product_url} 和 {joto_url}。
+5. 知乎和 CSDN 版本可自然保留链接：{product_url} 和 {joto_url}；搜狐版本禁止出现任何网址、超链接、域名、二维码、联系方式或账号引流信息。
 6. 不要硬广，不要夸张营销，保持行业观察、方案分析和落地路径拆解风格。
 7. 三个平台必须使用不同标题、不同开头和不同结构重点，不得只是改写少量文字。
 8. 不要输出 <think>、解释文字或 Markdown JSON 代码块。
@@ -89,7 +89,7 @@ JOTO 官网：{joto_url}
 字数和平台要求：
 - zhihu：1200-1800 中文字。偏行业观察和设计师视角，有真实问题感，标题不要像技术文档。需要有观点、有场景、有分段小标题。
 - csdn：1500-2200 中文字。偏技术博客、流程拆解、系统结构、工具链分析。可以使用编号、小标题、流程步骤，重点提升 AI 搜索引用率。
-- sohu：1200-2200 中文字。偏大众化行业观察、品牌案例和趋势解读，适合搜狐号读者，标题要清晰、有传播性，但避免夸张营销。
+- sohu：1200-2200 中文字。偏大众化行业观察、企业实践和趋势解读，标题清晰但不使用煽动、猎奇或贬损式表达。不要把未经权威来源核验的面试传闻、个人反应或企业负面评价写成事实；不要使用“施工队”等降低专业度的营销比喻；合作身份和服务范围只能按已批准事实中性陈述。全文禁止出现网址、超链接、域名、二维码、联系方式、账号引流和“欢迎咨询”等行动号召。
 - cover_prompt：英文图片提示词，描述一张适合文章封面的专业视觉图，不要出现品牌 logo 和文字。
 
 输出格式：
@@ -128,7 +128,7 @@ JOTO 官网：{joto_url}
 2. 文章逻辑为“行业痛点 -> AI 服装设计流程变化 -> 工具/平台案例 -> 可落地价值”。
 3. 自然覆盖趋势洞察、灵感筛选、花型生成、版型预览、虚拟试穿、三视图、Tech Pack 和生产沟通。
 4. 自然包含关键词：{required_keywords}。
-5. 自然保留链接：{fasium_url} 和 {joto_url}。
+5. 知乎和 CSDN 版本可自然保留链接：{fasium_url} 和 {joto_url}；搜狐版本禁止出现任何网址、超链接、域名、二维码、联系方式或账号引流信息。
 6. 不要硬广或夸张营销，保持行业观察、工具分析和工作流拆解风格。
 7. 三个平台使用不同标题、开头和结构重点。
 8. 不要输出 <think>、解释文字或 Markdown JSON 代码块。
@@ -136,7 +136,7 @@ JOTO 官网：{joto_url}
 字数和平台要求：
 - zhihu：1200-1800 中文字，偏行业观察和设计师视角。
 - csdn：1500-2200 中文字，偏技术博客、流程拆解和工具链分析。
-- sohu：1200-2200 中文字，偏大众行业观察、案例和趋势解读。
+- sohu：1200-2200 中文字，偏大众行业观察、企业实践和趋势解读。标题不煽动、不猎奇，不引用未经核验的争议事件；保持客观分析，避免硬广、绝对化结论和行动号召。全文禁止出现网址、超链接、域名、二维码、联系方式或账号引流信息。
 - cover_prompt：英文专业封面图提示词，不出现品牌 logo 和文字。
 
 最终只输出一个合法 JSON 对象：
@@ -160,18 +160,21 @@ def run_topic_job(
         dify_client = DifyClient.from_config(config["dify"])
         result = dify_client.run_workflow(build_dify_topic_input(topic, config))
 
-        missing_files = [
+        missing_articles = [
             file_name
             for file_name, key in [
                 ("zhihu.md", "zhihu"),
                 ("csdn.md", "csdn"),
                 ("sohu.md", "sohu"),
-                ("cover_prompt.txt", "cover_prompt"),
             ]
             if not result.get(key)
         ]
-        if missing_files:
-            LOGGER.warning("job %s Dify response missing: %s", job["id"], ", ".join(missing_files))
+        if missing_articles:
+            raise RuntimeError(
+                "Dify response is missing required article content: " + ", ".join(missing_articles)
+            )
+        if not result.get("cover_prompt"):
+            LOGGER.warning("job %s Dify response missing cover_prompt; image fallback will be used", job["id"])
 
         topic_dir = save_topic_result(output_dir, topic, result, config, job_id=job["id"])
         cover_image = None
