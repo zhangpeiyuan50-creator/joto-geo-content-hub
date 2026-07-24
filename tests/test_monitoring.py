@@ -22,6 +22,14 @@ class MonitoringTests(unittest.TestCase):
             validate_platform_url("zhihu", "https://zhuanlan.zhihu.com/p/123?utm_source=test"),
             "https://zhuanlan.zhihu.com/p/123",
         )
+        self.assertEqual(
+            validate_platform_url("csdn", "https://blog.csdn.net/demo/article/details/123?spm=tracking"),
+            "https://blog.csdn.net/demo/article/details/123",
+        )
+        self.assertEqual(
+            validate_platform_url("zhihu", "https://zhuanlan.zhihu.com/p/123?just_published=1"),
+            "https://zhuanlan.zhihu.com/p/123",
+        )
 
     def test_compact_numbers(self) -> None:
         self.assertEqual(parse_compact_number("1.2万"), 12000)
@@ -33,6 +41,14 @@ class MonitoringTests(unittest.TestCase):
         metrics = parse_metrics_from_html("csdn", html)
         self.assertEqual(metrics["views"], 12000)
         self.assertEqual(metrics["likes"], 23)
+        self.assertIsNone(metrics["shares"])
+
+    def test_metrics_parser_reads_rendered_controls_and_attributes(self) -> None:
+        html = '<button aria-label="赞同 1"></button><button title="收藏 2"></button>'
+        metrics = parse_metrics_from_html("zhihu", html, "0 条评论 分享")
+        self.assertEqual(metrics["likes"], 1)
+        self.assertEqual(metrics["favorites"], 2)
+        self.assertEqual(metrics["comments"], 0)
         self.assertIsNone(metrics["shares"])
 
     def test_geo_scoring_levels(self) -> None:

@@ -241,6 +241,8 @@
     .alert-item strong { display: flex; align-items: center; gap: 7px; }
     .alert-item strong::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: #e08a26; }
     .alert-item small { display: block; margin-top: 5px; color: var(--muted); }
+    .alert-actions { display: flex; gap: 7px; margin-top: 9px; }
+    .alert-actions .tiny-link { background: #fff; }
     .alert-empty { padding: 25px 18px; display: flex; align-items: center; gap: 12px; }
     .alert-empty-mark { width: 34px; height: 34px; border-radius: 50%; background: var(--green-soft); color: var(--green); display: grid; place-items: center; font-weight: 800; }
     .alert-empty strong { display: block; font-size: 11px; }
@@ -328,7 +330,7 @@
           </div>
           <div class="analytics-toolbar">
             <div class="analytics-context"><span class="analytics-context-mark">G</span><div><strong id="analytics-scope">全站分析</strong><span id="analytics-updated">等待数据同步</span></div></div>
-            <div class="analytics-actions"><button id="monitor-engagement-all" class="button light" onclick="runMonitor('engagement')">↻ 刷新全站热度</button><button id="monitor-geo-all" class="button" onclick="runMonitor('geo')">执行 GEO 检测</button></div>
+            <div class="analytics-actions"><a class="button light" href="/jobs">补录文章链接</a><button id="monitor-engagement-all" class="button light" onclick="runMonitor('engagement')">↻ 刷新全站热度</button><button id="monitor-geo-all" class="button" onclick="runMonitor('geo')">执行 GEO 检测</button></div>
           </div>
           <div id="analytics-kpis" class="analytics-kpis"></div>
           <div class="analytics-grid">
@@ -537,7 +539,7 @@
       const activityValues = ["zhihu","csdn","sohu"].map(id => { const p=platforms[id] || {}; return Number(p.views || 0) + Number(p.likes || 0) + Number(p.comments || 0) + Number(p.favorites || 0) + Number(p.shares || 0); });
       const maxActivity = Math.max(...activityValues, 1);
       document.getElementById("platform-analytics").innerHTML = `<div class="platform-cards">${["zhihu","csdn","sohu"].map((platform,index) => {
-        const p=platforms[platform] || {}; const registered=Number(p.articles || 0); const available=registered > 0; const width=available ? Math.max(4,Math.round(activityValues[index] / maxActivity * 100)) : 0;
+        const p=platforms[platform] || {}; const registered=Number(p.articles || 0); const available=Number(p.collected_articles || 0) > 0; const width=available ? Math.max(4,Math.round(activityValues[index] / maxActivity * 100)) : 0;
         const value = metric => available ? formatNumber(p[metric]) : "—";
         return `<article class="platform-card ${platform}"><div class="platform-identity"><span class="platform-icon">${platform === "zhihu" ? "知" : platform === "csdn" ? "C" : "搜"}</span><div><strong>${names[platform]}</strong><small>${available ? `${registered} 篇已登记` : "暂未采集"}</small></div></div><div class="platform-primary"><span>阅读量</span><strong>${value("views")}</strong></div><div class="platform-stats"><div class="platform-stat"><span>点赞</span><strong>${value("likes")}</strong></div><div class="platform-stat"><span>评论</span><strong>${value("comments")}</strong></div><div class="platform-stat"><span>收藏</span><strong>${value("favorites")}</strong></div><div class="platform-stat"><span>分享</span><strong>${value("shares")}</strong></div><div class="activity-track" title="当前范围相对活跃度"><span class="activity-bar" style="width:${width}%"></span></div></div></article>`;
       }).join("")}</div>`;
@@ -552,7 +554,7 @@
       const alerts = layer?.alerts || [];
       document.getElementById("alert-count").className = `status ${alerts.length ? "pending" : "success"}`;
       document.getElementById("alert-count").textContent = `${alerts.length} 项`;
-      document.getElementById("monitor-alerts").innerHTML = alerts.length ? alerts.map(item => `<div class="alert-item"><strong>${escapeHtml(providerLabel(item.provider) || item.alert_type || "监测提醒")}</strong><div>${escapeHtml(item.message)}</div><small>${escapeHtml(item.created_at)}</small></div>`).join("") : `<div class="alert-empty"><span class="alert-empty-mark">✓</span><div><strong>当前运行正常</strong><span>没有登录失效或采集异常</span></div></div>`;
+      document.getElementById("monitor-alerts").innerHTML = alerts.length ? alerts.map(item => `<div class="alert-item"><strong>${escapeHtml(providerLabel(item.provider) || item.alert_type || "监测提醒")}</strong><div>${escapeHtml(item.message)}</div><small>${escapeHtml(item.created_at)}</small>${item.job_id ? `<div class="alert-actions"><a class="tiny-link" href="/jobs/${encodeURIComponent(item.job_id)}#job-monitor">去补录 / 查看 Job</a></div>` : ""}</div>`).join("") : `<div class="alert-empty"><span class="alert-empty-mark">✓</span><div><strong>当前运行正常</strong><span>没有登录失效或采集异常</span></div></div>`;
       if (currentPage === "job-detail") renderSelectedJobAnalytics();
     }
 

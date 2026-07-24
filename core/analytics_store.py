@@ -25,7 +25,15 @@ def normalize_url(value: str) -> str:
     parsed = urlparse(value)
     if parsed.scheme not in {"http", "https"} or not parsed.netloc:
         raise ValueError("文章链接必须是完整的 http 或 https URL")
-    query = [(key, val) for key, val in parse_qsl(parsed.query) if not key.lower().startswith("utm_")]
+    tracking_keys = {
+        "spm", "from", "source", "sourcefrom", "just_published", "share_token",
+        "share_source", "utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content",
+    }
+    query = [
+        (key, val)
+        for key, val in parse_qsl(parsed.query)
+        if key.lower() not in tracking_keys and not key.lower().startswith("utm_")
+    ]
     path = parsed.path.rstrip("/") or "/"
     return urlunparse((parsed.scheme.lower(), parsed.netloc.lower(), path, "", urlencode(query), ""))
 
@@ -400,7 +408,9 @@ class AnalyticsStore:
                        e.captured_at, e.status
                 FROM published_articles a
                 LEFT JOIN engagement_snapshots e ON e.id=(
-                    SELECT id FROM engagement_snapshots WHERE article_id=a.id ORDER BY captured_at DESC LIMIT 1
+                    SELECT id FROM engagement_snapshots
+                    WHERE article_id=a.id AND status='success'
+                    ORDER BY captured_at DESC LIMIT 1
                 )
                 """ + (" WHERE a.module_id=?" if module_id != "all" else "") + " ORDER BY a.published_at DESC LIMIT 30",
                 params,
@@ -437,12 +447,14 @@ class AnalyticsStore:
             for field in ("likes", "comments", "favorites", "shares", "reposts"):
                 interaction_growth += max(0, int(latest_snapshot.get(field) or 0) - int(previous.get(field) or 0))
         platform_summary: dict[str, dict[str, int]] = {
-            platform: {field: 0 for field in ("articles", "views", "likes", "comments", "favorites", "shares", "reposts")}
+            platform: {field: 0 for field in ("articles", "collected_articles", "views", "likes", "comments", "favorites", "shares", "reposts")}
             for platform in PLATFORM_HOSTS
         }
         for row in latest:
             summary = platform_summary[row["platform"]]
             summary["articles"] += 1
+            if row["status"] == "success":
+                summary["collected_articles"] += 1
             for field in ("views", "likes", "comments", "favorites", "shares", "reposts"):
                 summary[field] += int(row[field] or 0)
         return {

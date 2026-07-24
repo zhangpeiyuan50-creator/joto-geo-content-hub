@@ -15,12 +15,20 @@ from core.analytics_store import AnalyticsStore, validate_platform_url
 LOGGER = logging.getLogger(__name__)
 METRICS = ("views", "likes", "comments", "favorites", "shares", "reposts")
 ALIASES = {
-    "views": {"viewcount", "views", "readcount", "readnum", "pv", "浏览量", "阅读量"},
-    "likes": {"likecount", "likes", "votecount", "upvotecount", "diggcount", "点赞", "赞同"},
-    "comments": {"commentcount", "comments", "commentnum", "评论"},
-    "favorites": {"favoritecount", "favorites", "collectcount", "collectioncount", "收藏"},
-    "shares": {"sharecount", "shares", "sharenum", "分享"},
+    "views": {"viewcount", "views", "readcount", "readnum", "viewnum", "pv", "浏览量", "阅读量"},
+    "likes": {"likecount", "likes", "likenum", "votecount", "voteupcount", "upvotecount", "diggcount", "点赞", "赞同"},
+    "comments": {"commentcount", "comments", "commentnum", "评论", "评论数"},
+    "favorites": {"favoritecount", "favorites", "favlistscount", "collectcount", "collectnum", "collectioncount", "收藏"},
+    "shares": {"sharecount", "shares", "sharenum", "分享", "分享数"},
     "reposts": {"repostcount", "reposts", "forwardcount", "转发"},
+}
+LABELS = {
+    "views": ("阅读量", "浏览量", "阅读", "浏览"),
+    "likes": ("点赞", "赞同"),
+    "comments": ("评论",),
+    "favorites": ("收藏",),
+    "shares": ("分享",),
+    "reposts": ("转发",),
 }
 
 
@@ -82,7 +90,26 @@ def extract_json_objects(html: str) -> list[Any]:
     return objects
 
 
-def parse_metrics_from_html(platform: str, html: str) -> dict[str, Any]:
+def _scan_labeled_text(metrics: dict[str, Any], text: str) -> None:
+    normalized = re.sub(r"\s+", " ", unescape(text))
+    for metric, names in LABELS.items():
+        if metrics[metric] is not None:
+            continue
+        for name in names:
+            patterns = (
+                rf"(?:{name})\s*[:：]?\s*(\d+(?:\.\d+)?\s*[万亿千kKmM]?)",
+                rf"(\d+(?:\.\d+)?\s*[万亿千kKmM]?)\s*(?:次|个|条)?\s*(?:{name})",
+            )
+            for pattern in patterns:
+                match = re.search(pattern, normalized, flags=re.I)
+                if match:
+                    metrics[metric] = parse_compact_number(match.group(1))
+                    break
+            if metrics[metric] is not None:
+                break
+
+
+def parse_metrics_from_html(platform: str, html: str, rendered_text: str = "") -> dict[str, Any]:
     del platform  # Platform-specific aliases can be added without changing the storage contract.
     metrics: dict[str, Any] = {name: None for name in METRICS}
     normalized_aliases = {
@@ -96,25 +123,12 @@ def parse_metrics_from_html(platform: str, html: str) -> dict[str, Any]:
                 if metrics[metric] is None and normalized_key in normalized_aliases[metric]:
                     metrics[metric] = parse_compact_number(value)
 
-    labels = {
-        "views": ("阅读", "浏览"),
-        "likes": ("点赞", "赞同"),
-        "comments": ("评论",),
-        "favorites": ("收藏",),
-        "shares": ("分享",),
-        "reposts": ("转发",),
-    }
     plain = unescape(re.sub(r"<[^>]+>", " ", html))
-    for metric, names in labels.items():
-        if metrics[metric] is not None:
-            continue
-        for name in names:
-            match = re.search(rf"(?:{name})\s*[:：]?\s*(\d+(?:\.\d+)?\s*[万亿千kKmM]?)", plain)
-            if not match:
-                match = re.search(rf"(\d+(?:\.\d+)?\s*[万亿千kKmM]?)\s*(?:{name})", plain)
-            if match:
-                metrics[metric] = parse_compact_number(match.group(1))
-                break
+    attributes = " ".join(
+        match.group(3)
+        for match in re.finditer(r"\b(aria-label|title|data-title)\s*=\s*([\"'])(.*?)\2", html, flags=re.I | re.S)
+    )
+    _scan_labeled_text(metrics, f"{plain} {attributes} {rendered_text}")
     metrics["raw"] = {"parser": "public_html", "available": [name for name in METRICS if metrics[name] is not None]}
     return metrics
 
@@ -192,20 +206,39 @@ class EngagementMonitor:
 
     def _collect_with_browser(self, article: dict[str, Any]) -> dict[str, Any]:
         try:
-            from playwright.sync_api import sync_playwright
+            from playwright.sync_api import Error as PlaywrightError, sync_playwright
         except ImportError as exc:
             raise RuntimeError("页面指标需要浏览器解析，但 Playwright 未安装") from exc
         profile_dir = Path(self.config.get("browser", {}).get("user_data_dir", "data/browser_profile")).resolve()
         profile_dir.mkdir(parents=True, exist_ok=True)
+        headless = bool(self.config.get("browser", {}).get("headless", False))
         with sync_playwright() as playwright:
             context = playwright.chromium.launch_persistent_context(
-                str(profile_dir), headless=True, viewport={"width": 1366, "height": 800}
+                str(profile_dir), headless=headless, viewport={"width": 1366, "height": 800}
             )
             page = context.pages[0] if context.pages else context.new_page()
             try:
-                page.goto(article["published_url"], wait_until="domcontentloaded", timeout=60000)
+                try:
+                    page.goto(article["published_url"], wait_until="domcontentloaded", timeout=60000)
+                except PlaywrightError as exc:
+                    # Some content sites keep analytics or ad requests open. If the
+                    # article body rendered, parse it instead of discarding the page.
+                    LOGGER.info(
+                        "browser navigation incomplete; parsing rendered page platform=%s error=%s",
+                        article["platform"], exc,
+                    )
                 page.wait_for_timeout(4000)
-                metrics = parse_metrics_from_html(article["platform"], page.content())
+                rendered_text = page.locator("body").inner_text(timeout=5000)
+                labelled_controls = page.locator("button, [aria-label], [title]").evaluate_all(
+                    """nodes => nodes.map(node => [
+                        node.innerText || '',
+                        node.getAttribute('aria-label') || '',
+                        node.getAttribute('title') || ''
+                    ].join(' ')).join(' ')"""
+                )
+                metrics = parse_metrics_from_html(
+                    article["platform"], page.content(), f"{rendered_text} {labelled_controls}"
+                )
                 metrics["raw"] = {
                     **metrics.get("raw", {}),
                     "parser": "playwright",
