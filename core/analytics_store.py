@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 import sqlite3
 from contextlib import contextmanager
 from datetime import date, datetime, timedelta
@@ -56,6 +57,20 @@ def validate_platform_url(platform: str, value: str) -> str:
     )
     if any(marker in lowered for marker in editor_markers):
         raise ValueError("检测到编辑器地址，请填写发布后的公开文章链接")
+    public_patterns = {
+        "zhihu": r"^https?://(?:zhuanlan\.)?zhihu\.com/p/\d+/?$",
+        "csdn": r"^https?://blog\.csdn\.net/[^/]+/article/details/\d+/?$",
+        "sohu": r"^https?://(?:www\.)?sohu\.com/a/\d+(?:_\d+)?/?$",
+    }
+    import re
+
+    if not re.match(public_patterns[platform], normalized, flags=re.I):
+        examples = {
+            "zhihu": "https://zhuanlan.zhihu.com/p/文章ID",
+            "csdn": "https://blog.csdn.net/用户名/article/details/文章ID",
+            "sohu": "https://www.sohu.com/a/文章ID_账号ID",
+        }
+        raise ValueError(f"这不是可监测的公开文章地址。正确格式示例：{examples[platform]}")
     return normalized
 
 
@@ -240,13 +255,24 @@ class AnalyticsStore:
             ).fetchall()
         return [dict(row) for row in rows]
 
+    def update_article_title(self, article_id: int, title: str) -> None:
+        clean_title = " ".join(str(title).split()).strip()
+        clean_title = re.sub(r"^#{1,6}\s*", "", clean_title).strip()
+        if not clean_title:
+            return
+        with self.connection() as db:
+            db.execute(
+                "UPDATE published_articles SET title=? WHERE id=?",
+                (clean_title[:300], article_id),
+            )
+
     def article_due_for_engagement(self, article: dict[str, Any], current: datetime | None = None) -> bool:
         current = current or datetime.now()
         published = datetime.fromisoformat(str(article["published_at"]))
         age_days = max(0, (current.date() - published.date()).days)
         with self.connection() as db:
             row = db.execute(
-                "SELECT captured_at FROM engagement_snapshots WHERE article_id=? AND status='success' ORDER BY captured_at DESC LIMIT 1",
+                "SELECT captured_at FROM engagement_snapshots WHERE article_id=? AND status='success' ORDER BY captured_at DESC, id DESC LIMIT 1",
                 (article["id"],),
             ).fetchone()
         if not row:
@@ -273,6 +299,36 @@ class AnalyticsStore:
                     error,
                 ),
             )
+
+    def add_manual_engagement_snapshot(
+        self,
+        job_id: str,
+        platform: str,
+        metrics: dict[str, int],
+    ) -> dict[str, Any]:
+        article = self.article(job_id, platform)
+        if not article:
+            raise ValueError("没有找到该平台的文章登记")
+        fields = ("views", "likes", "comments", "favorites", "shares", "reposts")
+        with self.connection() as db:
+            previous_row = db.execute(
+                """
+                SELECT views, likes, comments, favorites, shares, reposts
+                FROM engagement_snapshots
+                WHERE article_id=? AND status='success'
+                ORDER BY captured_at DESC, id DESC LIMIT 1
+                """,
+                (article["id"],),
+            ).fetchone()
+        previous = dict(previous_row) if previous_row else {}
+        merged = {
+            field: metrics[field] if field in metrics else previous.get(field)
+            for field in fields
+        }
+        merged["raw"] = {"parser": "manual", "entered_fields": sorted(metrics)}
+        self.add_engagement_snapshot(int(article["id"]), merged, "success")
+        self.resolve_alert(f"engagement:{article['id']}")
+        return merged
 
     def start_run(self, run_type: str) -> int:
         with self.connection() as db:
@@ -315,6 +371,50 @@ class AnalyticsStore:
     def resolve_alert(self, dedupe_key: str) -> None:
         with self.connection() as db:
             db.execute("UPDATE monitoring_alerts SET resolved_at=? WHERE dedupe_key=?", (now(), dedupe_key))
+
+    def resolve_alert_by_id(self, alert_id: int) -> bool:
+        with self.connection() as db:
+            cursor = db.execute(
+                "UPDATE monitoring_alerts SET resolved_at=? WHERE id=? AND resolved_at IS NULL",
+                (now(), alert_id),
+            )
+            return cursor.rowcount > 0
+
+    def delete_article(self, job_id: str, platform: str) -> bool:
+        with self.connection() as db:
+            row = db.execute(
+                "SELECT id FROM published_articles WHERE job_id=? AND platform=?",
+                (job_id, platform),
+            ).fetchone()
+            if not row:
+                return False
+            article_id = int(row["id"])
+            db.execute("DELETE FROM engagement_snapshots WHERE article_id=?", (article_id,))
+            db.execute("DELETE FROM published_articles WHERE id=?", (article_id,))
+            db.execute(
+                """
+                UPDATE monitoring_alerts SET resolved_at=?
+                WHERE job_id=? AND provider=? AND resolved_at IS NULL
+                  AND alert_type IN ('engagement_failed', 'published_url_missing')
+                """,
+                (now(), job_id, platform),
+            )
+            return True
+
+    def clear_registered_articles(self) -> int:
+        with self.connection() as db:
+            count = int(db.execute("SELECT COUNT(*) count FROM published_articles").fetchone()["count"])
+            db.execute("DELETE FROM engagement_snapshots")
+            db.execute("DELETE FROM published_articles")
+            db.execute(
+                """
+                UPDATE monitoring_alerts SET resolved_at=?
+                WHERE resolved_at IS NULL
+                  AND alert_type IN ('engagement_failed', 'published_url_missing')
+                """,
+                (now(),),
+            )
+            return count
 
     def geo_due_jobs(self, due_days: list[int], current: datetime | None = None) -> list[dict[str, Any]]:
         current = current or datetime.now()
@@ -376,7 +476,7 @@ class AnalyticsStore:
                 """
                 SELECT e.*, a.platform FROM engagement_snapshots e
                 JOIN published_articles a ON a.id=e.article_id
-                WHERE a.job_id=? ORDER BY e.captured_at DESC
+                WHERE a.job_id=? ORDER BY e.captured_at DESC, e.id DESC
                 """,
                 (job_id,),
             ).fetchall()
@@ -403,14 +503,15 @@ class AnalyticsStore:
             ).fetchall()
             latest = db.execute(
                 """
-                SELECT a.platform, a.job_id, a.module_id, a.title, a.published_url,
+                SELECT a.id AS article_id, a.platform, a.job_id, a.module_id, a.title,
+                       a.published_url, a.published_at, a.capture_method,
                        e.views, e.likes, e.comments, e.favorites, e.shares, e.reposts,
                        e.captured_at, e.status
                 FROM published_articles a
                 LEFT JOIN engagement_snapshots e ON e.id=(
                     SELECT id FROM engagement_snapshots
                     WHERE article_id=a.id AND status='success'
-                    ORDER BY captured_at DESC LIMIT 1
+                    ORDER BY captured_at DESC, id DESC LIMIT 1
                 )
                 """ + (" WHERE a.module_id=?" if module_id != "all" else "") + " ORDER BY a.published_at DESC LIMIT 30",
                 params,
@@ -429,7 +530,7 @@ class AnalyticsStore:
             recent_snapshots: dict[int, list[dict[str, Any]]] = {}
             for article_id in article_ids:
                 rows = db.execute(
-                    "SELECT * FROM engagement_snapshots WHERE article_id=? AND status='success' ORDER BY captured_at DESC LIMIT 2",
+                    "SELECT * FROM engagement_snapshots WHERE article_id=? AND status='success' ORDER BY captured_at DESC, id DESC LIMIT 2",
                     (article_id,),
                 ).fetchall()
                 recent_snapshots[article_id] = [dict(row) for row in rows]
@@ -446,8 +547,11 @@ class AnalyticsStore:
             today_views_growth += max(0, int(latest_snapshot.get("views") or 0) - int(previous.get("views") or 0))
             for field in ("likes", "comments", "favorites", "shares", "reposts"):
                 interaction_growth += max(0, int(latest_snapshot.get(field) or 0) - int(previous.get(field) or 0))
-        platform_summary: dict[str, dict[str, int]] = {
-            platform: {field: 0 for field in ("articles", "collected_articles", "views", "likes", "comments", "favorites", "shares", "reposts")}
+        platform_summary: dict[str, dict[str, Any]] = {
+            platform: {
+                **{field: 0 for field in ("articles", "collected_articles", "views", "likes", "comments", "favorites", "shares", "reposts")},
+                "last_captured_at": None,
+            }
             for platform in PLATFORM_HOSTS
         }
         for row in latest:
@@ -455,6 +559,9 @@ class AnalyticsStore:
             summary["articles"] += 1
             if row["status"] == "success":
                 summary["collected_articles"] += 1
+                captured_at = str(row["captured_at"] or "")
+                if captured_at and (not summary["last_captured_at"] or captured_at > summary["last_captured_at"]):
+                    summary["last_captured_at"] = captured_at
             for field in ("views", "likes", "comments", "favorites", "shares", "reposts"):
                 summary[field] += int(row[field] or 0)
         return {

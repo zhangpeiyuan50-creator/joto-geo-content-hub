@@ -19,7 +19,7 @@ from core.config import load_config
 from core.content_profiles import DEFAULT_MODULE_ID, get_content_profile, list_content_profiles
 from core.job_queue import load_job, load_recent_jobs, save_job
 from core.analytics_store import AnalyticsStore
-from core.engagement_monitor import analytics_path
+from core.engagement_monitor import analytics_path, login_engagement_platform
 from core.geo_monitor import login_provider
 from main import (
     PROJECT_ROOT,
@@ -214,15 +214,19 @@ def run_publisher(module_id: str, platform: str, job_id: str) -> None:
             )
 
 
-def run_monitor_task(monitor_type: str, job_id: str | None = None) -> None:
+def run_monitor_task(
+    monitor_type: str,
+    job_id: str | None = None,
+    force: bool = False,
+) -> None:
     with state_lock:
         monitor_state[monitor_type].update(running=True, message="正在执行", result={})
     try:
         config = load_app_config()
         result = (
-            run_engagement_monitor(config, job_id=job_id, force=bool(job_id))
+            run_engagement_monitor(config, job_id=job_id, force=force or bool(job_id))
             if monitor_type == "engagement"
-            else run_geo_monitor(config, job_id=job_id, force=bool(job_id))
+            else run_geo_monitor(config, job_id=job_id, force=force or bool(job_id))
         )
         message = f"完成：成功 {result['succeeded']}，失败 {result['failed']}"
         append_log(f"[MONITOR] type={monitor_type} job={job_id or 'due'} result={result}")
@@ -234,6 +238,14 @@ def run_monitor_task(monitor_type: str, job_id: str | None = None) -> None:
     finally:
         with state_lock:
             monitor_state[monitor_type].update(running=False, message=message, result=result)
+
+
+def run_platform_login(platform: str) -> None:
+    try:
+        login_engagement_platform(PROJECT_ROOT, get_config(), platform)
+    except Exception as exc:
+        append_log(f"[ERROR] platform login failed platform={platform}: {exc}")
+        append_log(traceback.format_exc())
 
 
 def normalize_status(status: str) -> str:
@@ -750,16 +762,74 @@ class Handler(BaseHTTPRequestHandler):
                 self.send_json({"error": str(exc)}, HTTPStatus.BAD_REQUEST)
             return
 
+        if len(parts) == 5 and parts[:2] == ["api", "jobs"] and parts[3:] == ["published-url", "delete"]:
+            job_id = parts[2]
+            payload = self.read_json_body()
+            platform = str(payload.get("platform", "")).strip().lower()
+            if platform not in PUBLISH_PLATFORMS:
+                self.send_json({"error": "不支持的平台"}, HTTPStatus.BAD_REQUEST)
+                return
+            deleted = get_analytics_store().delete_article(job_id, platform)
+            job = load_job(get_data_dir(), job_id)
+            if job:
+                job.setdefault("published_urls", {}).pop(platform, None)
+                if job.setdefault("publish_status", {}).get(platform) == "published":
+                    job["publish_status"][platform] = "idle"
+                save_job(get_data_dir(), job)
+            self.send_json({"ok": True, "deleted": deleted})
+            return
+
+        if len(parts) == 4 and parts[:2] == ["api", "jobs"] and parts[3] == "engagement":
+            job_id = parts[2]
+            payload = self.read_json_body()
+            platform = str(payload.get("platform", "")).strip().lower()
+            if platform not in PUBLISH_PLATFORMS:
+                self.send_json({"error": "不支持的平台"}, HTTPStatus.BAD_REQUEST)
+                return
+            metrics: dict[str, int] = {}
+            try:
+                for field in ("likes", "favorites", "comments", "shares"):
+                    value = payload.get(field)
+                    if value in (None, ""):
+                        raise ValueError(f"请填写{field}")
+                    number = int(value)
+                    if number < 0:
+                        raise ValueError("传播数据不能小于 0")
+                    metrics[field] = number
+                saved = get_analytics_store().add_manual_engagement_snapshot(job_id, platform, metrics)
+                self.send_json({"ok": True, "metrics": saved})
+            except (TypeError, ValueError) as exc:
+                self.send_json({"error": str(exc)}, HTTPStatus.BAD_REQUEST)
+            return
+
+        if len(parts) == 4 and parts[:2] == ["api", "alerts"] and parts[3] == "resolve":
+            try:
+                alert_id = int(parts[2])
+            except ValueError:
+                self.send_json({"error": "提醒 ID 不正确"}, HTTPStatus.BAD_REQUEST)
+                return
+            resolved = get_analytics_store().resolve_alert_by_id(alert_id)
+            self.send_json({"ok": True, "resolved": resolved})
+            return
+
         if len(parts) == 3 and parts[:2] == ["api", "monitor"] and parts[2] in {"engagement", "geo"}:
             monitor_type = parts[2]
             payload = self.read_json_body()
             job_id = str(payload.get("job_id", "")).strip() or None
+            force = bool(payload.get("force", False))
             with state_lock:
                 if monitor_state[monitor_type]["running"]:
                     self.send_json({"error": "该监测任务正在执行"}, HTTPStatus.CONFLICT)
                     return
-            threading.Thread(target=run_monitor_task, args=(monitor_type, job_id), daemon=True).start()
-            self.send_json({"ok": True, "monitor_type": monitor_type, "job_id": job_id}, HTTPStatus.ACCEPTED)
+            threading.Thread(
+                target=run_monitor_task,
+                args=(monitor_type, job_id, force),
+                daemon=True,
+            ).start()
+            self.send_json(
+                {"ok": True, "monitor_type": monitor_type, "job_id": job_id, "force": force},
+                HTTPStatus.ACCEPTED,
+            )
             return
 
         if len(parts) == 4 and parts[:2] == ["api", "llm"] and parts[3] == "login":
@@ -769,6 +839,19 @@ class Handler(BaseHTTPRequestHandler):
                 return
             threading.Thread(target=login_provider, args=(PROJECT_ROOT, provider), daemon=True).start()
             self.send_json({"ok": True, "provider": provider}, HTTPStatus.ACCEPTED)
+            return
+
+        if len(parts) == 4 and parts[:2] == ["api", "platform"] and parts[3] == "login":
+            platform = parts[2]
+            if platform not in PUBLISH_PLATFORMS:
+                self.send_json({"error": "不支持的平台"}, HTTPStatus.BAD_REQUEST)
+                return
+            threading.Thread(
+                target=run_platform_login,
+                args=(platform,),
+                daemon=True,
+            ).start()
+            self.send_json({"ok": True, "platform": platform}, HTTPStatus.ACCEPTED)
             return
 
         self.send_text("Not found", HTTPStatus.NOT_FOUND)

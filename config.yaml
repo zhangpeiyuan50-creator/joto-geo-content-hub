@@ -291,7 +291,15 @@ monitoring:
   engagement:
     daily_days: 30
     archive_frequency: weekly
-    daily_time: "14:00"
+    # Runs by the local scheduler daemon. Keep this visible so manual and
+    # scheduled creator-center collection can be observed when needed.
+    daily_time: "20:00"
+    zhihu_creator_pages: 5
+    headless: false
+    creator_pages:
+      zhihu: 5
+      csdn: 10
+      sohu: 10
   geo:
     due_days: [7, 14, 30]
     providers: [yuanbao, kimi, deepseek, doubao]

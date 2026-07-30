@@ -120,6 +120,30 @@ def load_recent_jobs(data_dir: Path, limit: int = 10) -> list[dict[str, Any]]:
     return jobs
 
 
+def clear_published_urls(data_dir: Path) -> int:
+    jobs_dir = data_dir / "jobs"
+    if not jobs_dir.exists():
+        return 0
+    changed = 0
+    for path in jobs_dir.glob("*.json"):
+        try:
+            job = json.loads(path.read_text(encoding="utf-8"))
+        except (json.JSONDecodeError, OSError):
+            continue
+        if not job.get("published_urls") and not any(
+            status == "published" for status in job.get("publish_status", {}).values()
+        ):
+            continue
+        job.pop("published_urls", None)
+        publish_status = job.setdefault("publish_status", {})
+        for platform in ("zhihu", "csdn", "sohu"):
+            if publish_status.get(platform) == "published":
+                publish_status[platform] = "idle"
+        path.write_text(json.dumps(job, ensure_ascii=False, indent=2), encoding="utf-8")
+        changed += 1
+    return changed
+
+
 def summarize_jobs_today(data_dir: Path) -> dict[str, int]:
     today = date.today().isoformat()
     jobs_dir = data_dir / "jobs"
